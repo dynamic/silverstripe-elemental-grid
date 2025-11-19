@@ -21,12 +21,18 @@
         "silverstripe/framework": "^5.3 || ^6.0",
         "silverstripe/vendor-plugin": "^2.0 || ^3.0",
         "dnadesign/silverstripe-elemental": "^5.3 || ^6.0",
-        "wedevelopnl/silverstripe-media-field": "^4.0 || ^5.0",
+        "wedevelopnl/silverstripe-media-field": "dev-feature/ss5-ss6-dual-compat",
         "jonom/focuspoint": "^5.0 || ^6.0"
     },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^3.4"
     },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/dynamic/silverstripe-media-field.git"
+        }
+    ],
     "extra": {
         "expose": [
             "client/dist",
