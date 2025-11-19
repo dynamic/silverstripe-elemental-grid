@@ -188,8 +188,6 @@ final class ElementContentExtension extends Extension
 
     public function onBeforeWrite(): void
     {
-        parent::onBeforeWrite();
-
         if ($this->getOwner()->MediaType === MediaField::TYPE_VIDEO && $this->getOwner()->MediaVideoFullURL) {
             $this->getOwner()->MediaVideoFullURL = trim($this->getOwner()->MediaVideoFullURL);
             MediaField::saveEmbed($this->getOwner());
