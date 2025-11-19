@@ -18,7 +18,7 @@ use SilverStripe\Forms\OptionsetField;
 use SilverStripe\Forms\ReadonlyField;
 use SilverStripe\Forms\Tab;
 use SilverStripe\Forms\TextField;
-use SilverStripe\ORM\DataExtension;
+use SilverStripe\Core\Extension;
 use UncleCheese\DisplayLogic\Forms\Wrapper;
 use WeDevelop\ElementalGrid\CSSFramework\CSSFrameworkInterface;
 use WeDevelop\ElementalGrid\CSSFramework\TailwindCSSFramework;
@@ -29,7 +29,7 @@ use WeDevelop\MediaField\Form\MediaField;
  * @method Image MediaImage()
  * @property ElementContent|ElementContentExtension $owner
  */
-final class ElementContentExtension extends DataExtension
+final class ElementContentExtension extends Extension
 {
     use Configurable;
 

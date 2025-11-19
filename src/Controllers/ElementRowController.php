@@ -13,7 +13,7 @@ final class ElementRowController extends ElementController
 
     private BaseElement $previousRow;
 
-    public function forTemplate(): ?string
+    public function forTemplate(): string
     {
         return $this->element->forTemplate(false);
     }

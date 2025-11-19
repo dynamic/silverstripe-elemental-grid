@@ -6,17 +6,20 @@ use DNADesign\Elemental\Models\BaseElement;
 use SilverStripe\Dev\BuildTask;
 use SilverStripe\ORM\Queries\SQLSelect;
 use SilverStripe\ORM\Queries\SQLUpdate;
+use SilverStripe\PolyExecution\PolyOutput;
+use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputInterface;
 use WeDevelop\ElementalGrid\Models\ElementRow;
 
 class MigrateNamespaceTask extends BuildTask
 {
-    protected $title = 'Elemental grid namespace migration';
+    protected string $title = 'Elemental grid namespace migration';
 
-    protected $description = 'Migrate elemental grid TheWebmen namespace to WeDevelop namespace';
+    protected static string $description = 'Migrate elemental grid TheWebmen namespace to WeDevelop namespace';
 
     private static string $segment = 'migrate-elemental-grid-namespace';
 
-    public function run($request)
+    protected function execute(InputInterface $input, PolyOutput $output): int
     {
         $elements = BaseElement::get()
             ->where([
@@ -26,7 +29,7 @@ class MigrateNamespaceTask extends BuildTask
         $counter = 0;
         $totalElements = $elements->count();
 
-        print_r(sprintf("Starting migration of %s elements\n\n", $totalElements));
+        $output->writeln(sprintf("Starting migration of %s elements\n", $totalElements));
 
         /** @var BaseElement $element */
         foreach ($elements as $element) {
@@ -41,9 +44,11 @@ class MigrateNamespaceTask extends BuildTask
 
             $counter++;
 
-            print_r(sprintf("Migrated %s of %s elements\n", $counter, $totalElements));
+            $output->writeln(sprintf("Migrated %s of %s elements", $counter, $totalElements));
         }
 
-        print_r(sprintf("\n\nMigration done for %s elements!", $counter));
+        $output->writeln(sprintf("\nMigration done for %s elements!", $counter));
+        
+        return Command::SUCCESS;
     }
 }
