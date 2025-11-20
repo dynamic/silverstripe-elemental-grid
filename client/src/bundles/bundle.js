@@ -3,8 +3,9 @@ import React from 'react';
 import ColumnSize from 'components/ColumnSize';
 import AddBlockToBottomButton from 'components/AddBlockToBottomButton';
 import AddBlockToTopButton from 'components/AddBlockToTopButton';
-import Toolbar from 'components/ElementEditor/Toolbar';
-import ReactGridDropZone from 'components/ReactGridDropZone';
+// Removed react-dnd dependent components - @dnd-kit uses wrapper pattern instead
+// import Toolbar from 'components/ElementEditor/Toolbar';
+// import ReactGridDropZone from 'components/ReactGridDropZone';
 
 // Helper function to extract numeric ID from DOM element IDs  
 const extractNumericId = (domElementId) => {
@@ -38,18 +39,19 @@ const isRowElement = (element) => {
 // console.log('[GRID DEBUG] ========== GRID BUNDLE LOADING (REACT DND INTEGRATION) ==========');
 // console.log('[GRID DEBUG] Core components loaded for alongside implementation with React DnD zones');
 
-const OverruledToolbar = () => (props) => (
-  <div>
-    <Toolbar {...props} />
-  </div>
-);
+// Removed OverruledToolbar - not needed with @dnd-kit architecture
+// const OverruledToolbar = () => (props) => (
+//   <div>
+//     <Toolbar {...props} />
+//   </div>
+// );
 
 // Register core grid components (no complex overrides)
 Injector.component.registerMany({
   AddBlockToBottomButton,
   AddBlockToTopButton,
   ColumnSize,
-  ReactGridDropZone,
+  // ReactGridDropZone removed - @dnd-kit handles drop zones internally
 });
 
 // Cache for row elements to quickly restore during drag operations
@@ -405,8 +407,12 @@ const withGridFunctionality = (OriginalElement) => {
       // The GraphQL mutation will handle the update
     };
 
+    // Debug: Log areaId to verify it's available
+    console.log('[GRID DEBUG] Creating ColumnSize with areaId:', props.areaId, 'for element:', element.id);
+    
     const gridComponent = React.createElement(ColumnSizeComponent, {
       elementId: element.id,
+      areaId: props.areaId, // Pass areaId from props
       size: gridData.size || 12,
       defaultViewport: gridData.defaultViewport || 'LG',
       gridColumns: element.blockSchema.grid.gridColumns || 12,
@@ -957,12 +963,12 @@ window.document.addEventListener('DOMContentLoaded', () => {
     console.log('[GRID DEBUG] Element enhanced with grid functionality');
   });
 
-  // Keep the toolbar enhancement (this works well)
-  console.log('[GRID DEBUG] Applying ElementToolbar enhancement...');
-  Injector.transform('elemental-grid-toolbar', (updater) => {
-    updater.component('ElementToolbar', OverruledToolbar);
-    console.log('[GRID DEBUG] ElementToolbar enhanced');
-  });
+  // Removed toolbar enhancement - not needed with @dnd-kit architecture
+  // console.log('[GRID DEBUG] Applying ElementToolbar enhancement...');
+  // Injector.transform('elemental-grid-toolbar', (updater) => {
+  //   updater.component('ElementToolbar', OverruledToolbar);
+  //   console.log('[GRID DEBUG] ElementToolbar enhanced');
+  // });
 
   // Set up drag event listeners (keep existing functionality)
   addDragEventListeners();

@@ -1,6 +1,9 @@
 import PropTypes from 'prop-types';
 import { Component } from 'react';
 import { Input } from 'reactstrap';
+import backend from 'lib/Backend';
+import Config from 'lib/Config';
+import { getConfig } from 'state/editor/elementConfig';
 
 class ColumnSize extends Component {
   constructor(props) {
@@ -53,7 +56,7 @@ class ColumnSize extends Component {
     const newSize = parseInt(event.target.value, 10);
     this.setState({ currentSize: newSize });
 
-    // Update via GraphQL mutation using the correct viewport
+    // Update via REST API using the correct viewport
     const viewport = this.props.defaultViewport || 'MD';
     const sizeField = `size${viewport}`;
     this.updateElementGrid({ [sizeField]: newSize });
@@ -72,7 +75,7 @@ class ColumnSize extends Component {
     const newOffset = parseInt(event.target.value, 10);
     this.setState({ currentOffset: newOffset });
 
-    // Update via GraphQL mutation using the correct viewport
+    // Update via REST API using the correct viewport
     const viewport = this.props.defaultViewport || 'MD';
     const offsetField = `offset${viewport}`;
     this.updateElementGrid({ [offsetField]: newOffset });
@@ -88,109 +91,25 @@ class ColumnSize extends Component {
   }
 
   updateElementGrid(gridData) {
-    const { elementId } = this.props;
-
-    // Get CSRF token from SilverStripe's window.ss.config
-    const csrfTokenValue = window.ss && window.ss.config && window.ss.config.SecurityID
-      ? window.ss.config.SecurityID
-      : null;
-
-    if (!csrfTokenValue) {
-      console.error('[Grid] CSRF token is missing. Aborting GraphQL request for element grid update.');
-      return;
-    }
-
-    // Make direct GraphQL call to update element grid properties
-    const query = `
-      mutation UpdateElementGrid(
-        $id: ID!,
-        $sizeXS: Int,
-        $sizeSM: Int,
-        $sizeMD: Int,
-        $sizeLG: Int,
-        $sizeXL: Int,
-        $offsetXS: Int,
-        $offsetSM: Int,
-        $offsetMD: Int,
-        $offsetLG: Int,
-        $offsetXL: Int
-      ) {
-        updateElementGrid(
-          id: $id,
-          sizeXS: $sizeXS,
-          sizeSM: $sizeSM,
-          sizeMD: $sizeMD,
-          sizeLG: $sizeLG,
-          sizeXL: $sizeXL,
-          offsetXS: $offsetXS,
-          offsetSM: $offsetSM,
-          offsetMD: $offsetMD,
-          offsetLG: $offsetLG,
-          offsetXL: $offsetXL
-        ) {
-          id
-          sizeXS
-          sizeSM
-          sizeMD
-          sizeLG
-          sizeXL
-          offsetXS
-          offsetSM
-          offsetMD
-          offsetLG
-          offsetXL
-        }
-      }
-    `;
-
-    const variables = {
+    const { elementId, areaId, onGridUpdate } = this.props;
+    // Construct URL following the same pattern as api/sort
+    const controllerLink = getConfig().controllerLink.replace(/\/$/, '');
+    const url = `/${controllerLink}/api/updateGrid`;
+    
+    backend.post(url, {
       id: elementId,
       ...gridData,
-    };
-
-    const headers = {
-      'Content-Type': 'application/json',
-      'X-Requested-With': 'XMLHttpRequest',
-      'X-CSRF-TOKEN': csrfTokenValue,
-    };
-
-    // Use fetch to call the GraphQL endpoint directly
-    fetch('/admin/graphql', {
-      method: 'POST',
-      headers,
-      credentials: 'same-origin',
-      body: JSON.stringify({
-        query,
-        variables,
-      }),
+    }, {
+      'X-SecurityID': Config.get('SecurityID')
     })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then((result) => {
-        if (result.errors) {
-          console.error('[Grid] GraphQL mutation errors:', result.errors);
-          // Log detailed error information
-          result.errors.forEach((error) => {
-            console.error('[Grid] Error details:', error.message, error);
-          });
-          // Notify user of failure
-          if (window.statusMessage) {
-            window.statusMessage('Failed to update grid properties. Please try again.', 'error');
-          }
-        } else {
-          console.log('[Grid] Successfully updated element grid properties:', result.data);
+      .then(() => {
+        // Call parent callback to trigger refetch if provided
+        if (typeof onGridUpdate === 'function') {
+          onGridUpdate();
         }
       })
-      .catch((error) => {
-        console.error('[Grid] Failed to update element grid properties:', error);
-        // Notify user of network or other errors
-        if (window.statusMessage) {
-          window.statusMessage('Failed to update grid properties. Please check your connection and try again.', 'error');
-        }
+      .catch((err) => {
+        console.error('[Grid] Failed to update element grid properties:', err);
       });
   }
 
@@ -253,8 +172,8 @@ ColumnSize.propTypes = {
   gridColumns: PropTypes.number,
   onChangeSize: PropTypes.func,
   onChangeOffset: PropTypes.func,
+  onGridUpdate: PropTypes.func,
   id: PropTypes.string,
-  updateElementGrid: PropTypes.func,
 };
 
 ColumnSize.defaultProps = {
@@ -264,8 +183,8 @@ ColumnSize.defaultProps = {
   gridColumns: 12,
   onChangeSize: null,
   onChangeOffset: null,
+  onGridUpdate: null,
   id: '',
-  updateElementGrid: null,
 };
 
 export default ColumnSize;
