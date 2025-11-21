@@ -5,7 +5,7 @@ namespace WeDevelop\ElementalGrid\Extensions;
 use Psr\Log\LoggerInterface;
 use SilverStripe\Core\Extension;
 use SilverStripe\Core\Injector\Injector;
-use SilverStripe\Model\List\ArrayList;
+use SilverStripe\ORM\ArrayList;
 use WeDevelop\ElementalGrid\Controllers\ElementRowController;
 use WeDevelop\ElementalGrid\Models\ElementRow;
 

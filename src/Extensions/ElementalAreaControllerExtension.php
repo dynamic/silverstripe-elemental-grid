@@ -51,7 +51,8 @@ class ElementalAreaControllerExtension extends Extension
             ]);
             return $this->owner->getResponse()
                 ->addHeader('Content-Type', 'application/json')
-                ->setStatusCode(400);
+                ->setStatusCode(400)
+                ->setBody(json_encode(['error' => 'Invalid security token']));
         }
 
         // Get grid data from request
@@ -65,7 +66,8 @@ class ElementalAreaControllerExtension extends Extension
             $logger->error('Invalid request data', ['body' => $request->getBody()]);
             return $this->owner->getResponse()
                 ->addHeader('Content-Type', 'application/json')
-                ->setStatusCode(400);
+                ->setStatusCode(400)
+                ->setBody(json_encode(['error' => 'Missing required field: id']));
         }
         
         $id = $data['id'];
@@ -77,7 +79,8 @@ class ElementalAreaControllerExtension extends Extension
             $logger->error('Element not found', ['id' => $id]);
             return $this->owner->getResponse()
                 ->addHeader('Content-Type', 'application/json')
-                ->setStatusCode(404);
+                ->setStatusCode(404)
+                ->setBody(json_encode(['error' => 'Element not found']));
         }
 
         if (!$element->canEdit()) {
@@ -87,7 +90,8 @@ class ElementalAreaControllerExtension extends Extension
             ]);
             return $this->owner->getResponse()
                 ->addHeader('Content-Type', 'application/json')
-                ->setStatusCode(403);
+                ->setStatusCode(403)
+                ->setBody(json_encode(['error' => 'Insufficient permissions to edit this element']));
         }
 
         // Get grid field mapping
@@ -124,7 +128,8 @@ class ElementalAreaControllerExtension extends Extension
                 ]);
                 return $this->owner->getResponse()
                     ->addHeader('Content-Type', 'application/json')
-                    ->setStatusCode(500);
+                    ->setStatusCode(500)
+                    ->setBody(json_encode(['error' => 'Failed to save element: ' . $e->getMessage()]));
             }
         } else {
             $logger->info('No grid fields updated', ['element_id' => $id, 'data_received' => $data]);

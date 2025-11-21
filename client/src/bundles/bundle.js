@@ -25,11 +25,6 @@ const extractNumericId = (domElementId) => {
   return null;
 };
 
-// Helper function to detect element type (row vs regular element)
-const isRowElement = (element) => {
-  return element && element.classList && element.classList.contains('is-row');
-};
-
 // Removed createGridDropZone and createRowDropZone functions - now working with SilverStripe's existing system
 
 // Function to add grid drop zones around elements
@@ -313,7 +308,6 @@ const withGridFunctionality = (OriginalElement) => {
     // Check if this element needs grid functionality
     const { element } = props;
     const hasGridSchema = element && element.blockSchema && element.blockSchema.grid;
-    const isNotRow = hasGridSchema && !element.blockSchema.grid.isRow;
     const isRow = hasGridSchema && element.blockSchema.grid.isRow;
 
     // Determine if this is a row element (container type that shouldn't have grid controls)
@@ -705,12 +699,6 @@ const addDragEventListeners = () => {
 
 // Removed custom drop zone injection - now working with SilverStripe's existing system
 
-
-// insertAfter polyfill
-const insertAfter = (newNode, referenceNode) => {
-  referenceNode.parentNode.insertBefore(newNode, referenceNode.nextSibling);
-};
-
 // Trigger existing SilverStripe hover bar functionality
 const triggerHoverBarClick = (hoverBar) => {
   if (!hoverBar) return;
@@ -904,19 +892,6 @@ const getAreaIdFromContext = (targetElement) => {
   return 1;
 };
 
-// Helper function to get allowed element types
-const getAllowedElementTypes = () => {
-  // Try to get element types from the window context if available
-  if (window.ss && window.ss.elementTypes) {
-    return window.ss.elementTypes;
-  }
-
-  // Fallback: return empty array, ReactGridDropZone will handle this
-  return [];
-};
-
-
-
 // Helper function to trigger the appropriate hover bar based on position
 const triggerHoverBarForPosition = (targetElement, position) => {
   const elementWrapper = targetElement.parentElement;
@@ -938,129 +913,6 @@ const triggerHoverBarForPosition = (targetElement, position) => {
   } else {
     console.log('[GRID DEBUG] No hover bar found for', position, 'position');
   }
-};
-
-// Setup native drag and drop events to integrate with React DnD
-const setupNativeDragDropEvents = (zone, targetElement, position) => {
-  // Make the zone a proper drop target
-  zone.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    zone.classList.add('grid-drop-zone--drag-over');
-  });
-
-  zone.addEventListener('dragenter', (e) => {
-    e.preventDefault();
-    zone.classList.add('grid-drop-zone--drag-over');
-  });
-
-  zone.addEventListener('dragleave', (e) => {
-    if (!zone.contains(e.relatedTarget)) {
-      zone.classList.remove('grid-drop-zone--drag-over');
-    }
-  });
-
-  zone.addEventListener('drop', (e) => {
-    e.preventDefault();
-    zone.classList.remove('grid-drop-zone--drag-over');
-
-    // Debug: Log all available drag data types
-    console.log('[GRID DEBUG] Drop event - available data types:', e.dataTransfer.types);
-
-    // The issue is that SilverStripe stores data as application/json but it returns '[object Object]'
-    // We need to get the actual drag data from the drag event or monitor
-    let draggedElementId = null;
-
-    // Try to get drag data from different sources
-    const rawJsonData = e.dataTransfer.getData('application/json');
-    console.log('[GRID DEBUG] Raw JSON data:', rawJsonData);
-
-    // Since we can't get the actual data from dataTransfer, we need to intercept it from the drag start
-    // Let's try to get it from the dragged element's attributes or global state
-    const draggedElement = document.querySelector('.element-editor__element--dragging');
-    if (draggedElement) {
-      console.log('[GRID DEBUG] Currently dragging element attributes:', {
-        tagName: draggedElement.tagName,
-        className: draggedElement.className,
-        id: draggedElement.id,
-        attributes: Array.from(draggedElement.attributes).map(attr => `${attr.name}="${attr.value}"`)
-      });
-
-      const rawDraggedElementId = draggedElement.getAttribute('data-element-id') ||
-                        draggedElement.getAttribute('data-id') ||
-                        draggedElement.getAttribute('data-block-id') ||
-                        draggedElement.getAttribute('data-element') ||
-                        draggedElement.id;
-      draggedElementId = extractNumericId(rawDraggedElementId);
-      console.log('[GRID DEBUG] Found dragged element via CSS class:', rawDraggedElementId, '-> converted to numeric:', draggedElementId);
-
-      // Try to find ID in child elements if main element doesn't have it
-      if (!draggedElementId) {
-        const childWithId = draggedElement.querySelector('[data-element-id], [data-id], [data-block-id], [id]');
-        if (childWithId) {
-          const rawChildElementId = childWithId.getAttribute('data-element-id') ||
-                            childWithId.getAttribute('data-id') ||
-                            childWithId.getAttribute('data-block-id') ||
-                            childWithId.id;
-          draggedElementId = extractNumericId(rawChildElementId);
-          console.log('[GRID DEBUG] Found element ID in dragging child element:', rawChildElementId, '-> converted to numeric:', draggedElementId);
-        }
-      }
-    }
-
-    // If still no ID, try to find it from the drag image or any recently active element
-    if (!draggedElementId) {
-      // Look for any element that might have been recently dragged
-      const allElements = document.querySelectorAll('.element-editor__element[data-element-id]');
-      for (const element of allElements) {
-        if (element.style.opacity === '0.5' || element.classList.contains('dragging')) {
-          const rawElementId = element.getAttribute('data-element-id');
-          draggedElementId = extractNumericId(rawElementId);
-          console.log('[GRID DEBUG] Found dragged element via opacity/class:', rawElementId, '-> converted to numeric:', draggedElementId);
-          break;
-        }
-      }
-    }
-
-    // Alternative approach: Check if there's a global drag state we can access
-    if (!draggedElementId && window.currentDraggedElement) {
-      draggedElementId = window.currentDraggedElement;
-      // Ensure the ID is numeric (fallback in case it wasn't converted earlier)
-      if (draggedElementId && !/^\d+$/.test(draggedElementId)) {
-        draggedElementId = extractNumericId(draggedElementId);
-        console.log('[GRID DEBUG] Found dragged element from global state and converted to numeric:', draggedElementId);
-      } else {
-        console.log('[GRID DEBUG] Found dragged element from global state (already numeric):', draggedElementId);
-      }
-    }
-
-    if (!draggedElementId) {
-      console.warn('[GRID DEBUG] Could not determine dragged element ID. Available data:', {
-        hasDataTransfer: !!e.dataTransfer,
-        types: e.dataTransfer.types,
-        effectAllowed: e.dataTransfer.effectAllowed,
-        dropEffect: e.dataTransfer.dropEffect,
-        rawJsonData
-      });
-      // Don't return - let's try the fallback approach
-    } else {
-      console.log('[GRID DEBUG] Successfully found dragged element ID:', draggedElementId);
-    }
-
-    // Calculate insertion position
-    const insertionData = calculateGridInsertionPosition(position, targetElement);
-    console.log('[GRID DEBUG] Native drop on', position, 'zone:', insertionData);
-
-    // If we have a valid element ID, trigger the drag end handler
-    if (draggedElementId) {
-      console.log('[GRID DEBUG] Triggering drag end with element ID:', draggedElementId);
-      triggerSilverStripeDragEnd(draggedElementId, insertionData.insertAfterElementId);
-    } else {
-      // Fallback: Try to trigger hover bar functionality as a last resort
-      console.log('[GRID DEBUG] No element ID - falling back to hover bar trigger');
-      triggerHoverBarForPosition(targetElement, position);
-    }
-  });
 };
 
 // Prevent multiple initialization - use window object for cross-bundle scope

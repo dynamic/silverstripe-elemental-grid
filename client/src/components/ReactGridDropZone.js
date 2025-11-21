@@ -53,10 +53,7 @@ class ReactGridDropZone extends Component {
       isOver,
       canDrop,
       connectDropTarget,
-      targetElement,
-      AddElementPopoverComponent,
-      elementTypes,
-      areaId
+      targetElement
     } = this.props;
 
     console.log('[GRID DEBUG] ReactGridDropZone render:', {

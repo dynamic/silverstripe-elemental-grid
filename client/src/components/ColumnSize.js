@@ -22,11 +22,15 @@ class ColumnSize extends Component {
 
   componentDidUpdate(prevProps) {
     // Update state if props change (e.g., after a successful mutation)
+    const stateUpdate = {};
     if (prevProps.size !== this.props.size) {
-      this.setState({ currentSize: this.props.size || 12 });
+      stateUpdate.currentSize = this.props.size || 12;
     }
     if (prevProps.offset !== this.props.offset) {
-      this.setState({ currentOffset: this.props.offset || 0 });
+      stateUpdate.currentOffset = this.props.offset || 0;
+    }
+    if (Object.keys(stateUpdate).length > 0) {
+      this.setState(stateUpdate);
     }
   }
 
@@ -101,7 +105,7 @@ class ColumnSize extends Component {
   }
 
   updateElementGrid(gridData) {
-    const { elementId, areaId, onGridUpdate } = this.props;
+    const { elementId, onGridUpdate } = this.props;
     // Construct URL following the same pattern as api/sort
     const controllerLink = getConfig().controllerLink.replace(/\/$/, '');
     const url = `/${controllerLink}/api/updateGrid`;
