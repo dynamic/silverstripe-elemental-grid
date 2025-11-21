@@ -15,8 +15,8 @@ class ColumnSize extends Component {
     this.handleChangeSize = this.handleChangeSize.bind(this);
     this.handleChangeOffset = this.handleChangeOffset.bind(this);
     
-    // Auto-save is disabled by default to prevent database bloat
-    // Enable via prop or YAML config: WeDevelop\ElementalGrid\ElementalConfig.auto_save_grid_changes: true
+    // Auto-save is enabled by default in SS6 to persist changes immediately
+    // This is the only working method for grid changes in SilverStripe 6
     this.autoSaveEnabled = props.autoSaveEnabled || false;
   }
 
