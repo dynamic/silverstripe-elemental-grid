@@ -34,6 +34,10 @@ WeDevelop\ElementalGrid\ElementalConfig:
   enable_custom_title_classes: true
   default_title_tag: 'h2'
   grid_column_count: 12
+  # Grid Auto-Save Configuration
+  # Set to true to enable immediate saving on dropdown changes (creates version on every change)
+  # Set to false (default) to save only when clicking Save/Publish button (reduces database bloat)
+  auto_save_grid_changes: false
 
 DNADesign\Elemental\Controllers\ElementalAreaController:
   extensions:

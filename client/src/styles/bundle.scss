@@ -1,29 +1,52 @@
-.elemental-editor-list > .element-editor__element-holder {
-  padding: 0;
+/* Bootstrap Grid Implementation for CMS Visual Feedback */
+/* Make .elemental-editor-list a flex container (Bootstrap row) */
+.elemental-editor-list {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  margin-right: -15px !important;
+  margin-left: -15px !important;
+  
+  &.row {
+    /* Ensure Bootstrap row styles apply */
+    box-sizing: border-box;
+  }
 }
 
-/* Grid class transitions for smooth layout changes on wrapper divs */
-.elemental-editor-list > div {
+/* Element cards are direct children in SS6 - apply padding and grid classes to them */
+.elemental-editor-list > .element-editor__element {
+  padding-right: 15px !important;
+  padding-left: 15px !important;
+  box-sizing: border-box;
+  position: relative;
+  width: 100%;
+  min-height: 1px;
   transition: all 200ms ease-in-out;
   
-  &.col-lg-1,
-  &.col-lg-2,
-  &.col-lg-3,
-  &.col-lg-4,
-  &.col-lg-5,
-  &.col-lg-6,
-  &.col-lg-7,
-  &.col-lg-8,
-  &.col-lg-9,
-  &.col-lg-10,
-  &.col-lg-11,
-  &.col-lg-12 {
-    transition: all 200ms ease-in-out;
-  }
+  &.col-lg-1 { flex: 0 0 8.333333%; max-width: 8.333333%; }
+  &.col-lg-2 { flex: 0 0 16.666667%; max-width: 16.666667%; }
+  &.col-lg-3 { flex: 0 0 25%; max-width: 25%; }
+  &.col-lg-4 { flex: 0 0 33.333333%; max-width: 33.333333%; }
+  &.col-lg-5 { flex: 0 0 41.666667%; max-width: 41.666667%; }
+  &.col-lg-6 { flex: 0 0 50%; max-width: 50%; }
+  &.col-lg-7 { flex: 0 0 58.333333%; max-width: 58.333333%; }
+  &.col-lg-8 { flex: 0 0 66.666667%; max-width: 66.666667%; }
+  &.col-lg-9 { flex: 0 0 75%; max-width: 75%; }
+  &.col-lg-10 { flex: 0 0 83.333333%; max-width: 83.333333%; }
+  &.col-lg-11 { flex: 0 0 91.666667%; max-width: 91.666667%; }
+  &.col-lg-12 { flex: 0 0 100%; max-width: 100%; }
 
-  &[class*="offset-lg-"] {
-    transition: all 200ms ease-in-out;
-  }
+  /* Bootstrap offset classes - define left margins */
+  &.offset-lg-1 { margin-left: 8.333333%; }
+  &.offset-lg-2 { margin-left: 16.666667%; }
+  &.offset-lg-3 { margin-left: 25%; }
+  &.offset-lg-4 { margin-left: 33.333333%; }
+  &.offset-lg-5 { margin-left: 41.666667%; }
+  &.offset-lg-6 { margin-left: 50%; }
+  &.offset-lg-7 { margin-left: 58.333333%; }
+  &.offset-lg-8 { margin-left: 66.666667%; }
+  &.offset-lg-9 { margin-left: 75%; }
+  &.offset-lg-10 { margin-left: 83.333333%; }
+  &.offset-lg-11 { margin-left: 91.666667%; }
 }
 
 .element-editor__element {

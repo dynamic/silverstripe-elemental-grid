@@ -14,6 +14,10 @@ class ColumnSize extends Component {
     };
     this.handleChangeSize = this.handleChangeSize.bind(this);
     this.handleChangeOffset = this.handleChangeOffset.bind(this);
+    
+    // Auto-save is disabled by default to prevent database bloat
+    // Enable via prop or YAML config: WeDevelop\ElementalGrid\ElementalConfig.auto_save_grid_changes: true
+    this.autoSaveEnabled = props.autoSaveEnabled || false;
   }
 
   componentDidUpdate(prevProps) {
@@ -56,10 +60,13 @@ class ColumnSize extends Component {
     const newSize = parseInt(event.target.value, 10);
     this.setState({ currentSize: newSize });
 
-    // Update via REST API using the correct viewport
-    const viewport = this.props.defaultViewport || 'MD';
-    const sizeField = `size${viewport}`;
-    this.updateElementGrid({ [sizeField]: newSize });
+    // Only auto-save if explicitly enabled in config
+    if (this.autoSaveEnabled) {
+      const viewport = this.props.defaultViewport || 'MD';
+      const sizeField = `size${viewport}`;
+      this.updateElementGrid({ [sizeField]: newSize });
+    }
+    // Otherwise, the value will be submitted with the form via the name attribute
 
     if (typeof this.props.onChangeSize === 'function') {
       this.props.onChangeSize(event, {
@@ -75,10 +82,13 @@ class ColumnSize extends Component {
     const newOffset = parseInt(event.target.value, 10);
     this.setState({ currentOffset: newOffset });
 
-    // Update via REST API using the correct viewport
-    const viewport = this.props.defaultViewport || 'MD';
-    const offsetField = `offset${viewport}`;
-    this.updateElementGrid({ [offsetField]: newOffset });
+    // Only auto-save if explicitly enabled in config
+    if (this.autoSaveEnabled) {
+      const viewport = this.props.defaultViewport || 'MD';
+      const offsetField = `offset${viewport}`;
+      this.updateElementGrid({ [offsetField]: newOffset });
+    }
+    // Otherwise, the value will be submitted with the form via the name attribute
 
     if (typeof this.props.onChangeOffset === 'function') {
       this.props.onChangeOffset(event, {
@@ -116,6 +126,12 @@ class ColumnSize extends Component {
   render() {
     const sizeId = `columnSize-${this.props.elementId}`;
     const offsetId = `columnOffset-${this.props.elementId}`;
+    
+    // Generate proper field names for form submission
+    // Format: Elements[<elementId>][Size<Viewport>]
+    const viewport = this.props.defaultViewport || 'MD';
+    const sizeName = `Elements[${this.props.elementId}][Size${viewport}]`;
+    const offsetName = `Elements[${this.props.elementId}][Offset${viewport}]`;
 
     return (
       <div className="column-size-controls">
@@ -128,6 +144,7 @@ class ColumnSize extends Component {
             <Input
               type="select"
               id={sizeId}
+              name={sizeName}
               value={this.state.currentSize}
               onChange={this.handleChangeSize}
               className="form-control"
@@ -147,6 +164,7 @@ class ColumnSize extends Component {
             <Input
               type="select"
               id={offsetId}
+              name={offsetName}
               value={this.state.currentOffset}
               onChange={this.handleChangeOffset}
               className="form-control"
@@ -174,6 +192,7 @@ ColumnSize.propTypes = {
   onChangeOffset: PropTypes.func,
   onGridUpdate: PropTypes.func,
   id: PropTypes.string,
+  autoSaveEnabled: PropTypes.bool,
 };
 
 ColumnSize.defaultProps = {
@@ -185,6 +204,7 @@ ColumnSize.defaultProps = {
   onChangeOffset: null,
   onGridUpdate: null,
   id: '',
+  autoSaveEnabled: false,
 };
 
 export default ColumnSize;
