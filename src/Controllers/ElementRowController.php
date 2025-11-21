@@ -15,7 +15,7 @@ final class ElementRowController extends ElementController
 
     public function forTemplate(): string
     {
-        return $this->element->forTemplate(false);
+        return $this->element->forTemplate(false) ?? '';
     }
 
     public function getIsLastRow(): bool
