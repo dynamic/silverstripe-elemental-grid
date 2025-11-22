@@ -56,6 +56,7 @@
   transition: all 200ms ease-in-out;
   position: relative;
   z-index: 15; /* Ensure elements are above drop zones (z-index: 10) for proper drag functionality */
+  padding-bottom: 120px !important; /* Make room for grid controls */
 
   &--expanded {
     flex: 0 0 100%;
@@ -77,12 +78,30 @@
   &.is-row {
     background: #f4f6f8;
     padding: 1.5rem 1.5385rem;
+    padding-bottom: 1.5rem !important; /* Row elements don't have grid controls */
 
     .element-editor-summary {
       display: none;
     }
   }
 
+}
+
+/* Grid controls are siblings to element cards - position them to appear inside */
+.column-size-controls {
+  position: absolute;
+  bottom: 0;
+  left: 15px;
+  right: 15px;
+  background: white;
+  border-top: 1px solid #dbe0e9;
+  padding: 10px 15px;
+  z-index: 16; /* Above element card */
+  
+  /* Target the controls that come right after an element card */
+  .element-editor__element + & {
+    margin-top: -120px; /* Pull up into the padding-bottom space of previous element */
+  }
 }
 
 /* HOVER BAR STYLING - Completely hide visual feedback while preserving functionality */
