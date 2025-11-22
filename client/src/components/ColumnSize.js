@@ -1,9 +1,6 @@
 import PropTypes from 'prop-types';
 import { Component } from 'react';
 import { Input } from 'reactstrap';
-import backend from 'lib/Backend';
-import Config from 'lib/Config';
-import { getConfig } from 'state/editor/elementConfig';
 
 class ColumnSize extends Component {
   constructor(props) {
@@ -14,10 +11,6 @@ class ColumnSize extends Component {
     };
     this.handleChangeSize = this.handleChangeSize.bind(this);
     this.handleChangeOffset = this.handleChangeOffset.bind(this);
-    
-    // Auto-save is enabled by default in SS6 to persist changes immediately
-    // This is the only working method for grid changes in SilverStripe 6
-    this.autoSaveEnabled = props.autoSaveEnabled || false;
   }
 
   componentDidUpdate(prevProps) {
@@ -64,14 +57,7 @@ class ColumnSize extends Component {
     const newSize = parseInt(event.target.value, 10);
     this.setState({ currentSize: newSize });
 
-    // Only auto-save if explicitly enabled in config
-    if (this.autoSaveEnabled) {
-      const viewport = this.props.defaultViewport || 'MD';
-      const sizeField = `size${viewport}`;
-      this.updateElementGrid({ [sizeField]: newSize });
-    }
-    // Otherwise, the value will be submitted with the form via the name attribute
-
+    // Call parent callback for form integration
     if (typeof this.props.onChangeSize === 'function') {
       this.props.onChangeSize(event, {
         id: this.props.id,
@@ -86,14 +72,7 @@ class ColumnSize extends Component {
     const newOffset = parseInt(event.target.value, 10);
     this.setState({ currentOffset: newOffset });
 
-    // Only auto-save if explicitly enabled in config
-    if (this.autoSaveEnabled) {
-      const viewport = this.props.defaultViewport || 'MD';
-      const offsetField = `offset${viewport}`;
-      this.updateElementGrid({ [offsetField]: newOffset });
-    }
-    // Otherwise, the value will be submitted with the form via the name attribute
-
+    // Call parent callback for form integration
     if (typeof this.props.onChangeOffset === 'function') {
       this.props.onChangeOffset(event, {
         id: this.props.id,
@@ -102,29 +81,6 @@ class ColumnSize extends Component {
         field: 'offset'
       });
     }
-  }
-
-  updateElementGrid(gridData) {
-    const { elementId, onGridUpdate } = this.props;
-    // Construct URL following the same pattern as api/sort
-    const controllerLink = getConfig().controllerLink.replace(/\/$/, '');
-    const url = `/${controllerLink}/api/updateGrid`;
-    
-    backend.post(url, {
-      id: elementId,
-      ...gridData,
-    }, {
-      'X-SecurityID': Config.get('SecurityID')
-    })
-      .then(() => {
-        // Call parent callback to trigger refetch if provided
-        if (typeof onGridUpdate === 'function') {
-          onGridUpdate();
-        }
-      })
-      .catch((err) => {
-        console.error('[Grid] Failed to update element grid properties:', err);
-      });
   }
 
   render() {
@@ -194,9 +150,7 @@ ColumnSize.propTypes = {
   gridColumns: PropTypes.number,
   onChangeSize: PropTypes.func,
   onChangeOffset: PropTypes.func,
-  onGridUpdate: PropTypes.func,
   id: PropTypes.string,
-  autoSaveEnabled: PropTypes.bool,
 };
 
 ColumnSize.defaultProps = {
@@ -206,9 +160,7 @@ ColumnSize.defaultProps = {
   gridColumns: 12,
   onChangeSize: null,
   onChangeOffset: null,
-  onGridUpdate: null,
   id: '',
-  autoSaveEnabled: false,
 };
 
 export default ColumnSize;

@@ -192,7 +192,6 @@ const moveGridControlsIntoCards = () => {
     }
 
     if (!targetElementCard) {
-      console.warn(`[GRID DEBUG] Could not find element card for control with element ID: ${elementId}`);
       return;
     }
 
@@ -493,7 +492,6 @@ const withGridFunctionality = (OriginalElement) => {
         onChangeSize: handleChangeSize,
         onChangeOffset: handleChangeOffset,
         id: `grid-${element.id}`,
-        autoSaveEnabled: true, // Enables REST API auto-save for element Publish compatibility
       });
     }, [element.id, props.areaId, gridData.size, gridData.offset, ColumnSizeComponent]);
 
@@ -548,7 +546,6 @@ const interceptFormSubmissions = () => {
           hiddenInput.value = fieldValue;
           hiddenInput.setAttribute('data-grid-injected', 'true');
           form.appendChild(hiddenInput);
-          console.log('[GRID] Injected size field:', fieldName, '=', fieldValue);
         }
       }
     });
@@ -568,13 +565,11 @@ const interceptFormSubmissions = () => {
           hiddenInput.value = fieldValue;
           hiddenInput.setAttribute('data-grid-injected', 'true');
           form.appendChild(hiddenInput);
-          console.log('[GRID] Injected offset field:', fieldName, '=', fieldValue);
         }
       }
     });
   }, true); // Use capture phase to ensure we intercept before React
   
-  console.log('[GRID DEBUG] Form submission interceptor installed');
 };
 
 // Add event listeners for drag operations
@@ -589,19 +584,10 @@ const addDragEventListeners = () => {
       const draggedElement = e.target.closest('.element-editor__element');
       if (draggedElement) {
         // Debug: log all attributes to see what's available
-        console.log('[GRID DEBUG] Dragged element attributes:', {
-          tagName: draggedElement.tagName,
-          className: draggedElement.className,
-          id: draggedElement.id,
-          attributes: Array.from(draggedElement.attributes).map(attr => `${attr.name}="${attr.value}"`),
-          innerHTML: `${draggedElement.innerHTML.substring(0, 500)}...`
-        });
 
         // Look for all elements with ID attributes to understand the structure
         const elementsWithIds = draggedElement.querySelectorAll('[id]');
-        console.log('[GRID DEBUG] All child elements with IDs:');
         Array.from(elementsWithIds).forEach((el, index) => {
-          console.log(`  [${index}] ${el.tagName} id="${el.id}" class="${el.className}"`);
         });
 
         // Look for any data attributes that might contain the block ID
@@ -614,9 +600,7 @@ const addDragEventListeners = () => {
             }
           });
         });
-        console.log('[GRID DEBUG] All data attributes in dragged element:');
         dataAttributes.forEach((attr, index) => {
-          console.log(`  [${index}] ${attr.element} ${attr.attribute}="${attr.value}"`);
         });
 
         const elementId = draggedElement.getAttribute('data-element-id') ||
@@ -626,7 +610,6 @@ const addDragEventListeners = () => {
                          draggedElement.id;
         const numericElementId = extractNumericId(elementId);
         window.currentDraggedElement = numericElementId;
-        console.log('[GRID DEBUG] Captured dragged element ID on drag start:', elementId, '-> converted to numeric:', numericElementId);
 
         // If still no ID, try to find it in child elements
         if (!elementId) {
@@ -638,7 +621,6 @@ const addDragEventListeners = () => {
                            childWithId.id;
             const numericChildId = extractNumericId(childId);
             window.currentDraggedElement = numericChildId;
-            console.log('[GRID DEBUG] Found element ID in child element:', childId, '-> converted to numeric:', numericChildId);
           }
         }
       }
@@ -741,15 +723,12 @@ const addDragEventListeners = () => {
 const triggerHoverBarClick = (hoverBar) => {
   if (!hoverBar) return;
 
-  console.log('[GRID DEBUG] Attempting to trigger hover bar click');
 
   // Find the button inside the hover bar
   const hoverButton = hoverBar.querySelector('.element-editor__hover-bar-area');
   if (hoverButton) {
-    console.log('[GRID DEBUG] Found hover bar button, triggering click');
     hoverButton.click();
   } else {
-    console.log('[GRID DEBUG] No hover bar button found');
   }
 };
 
@@ -786,10 +765,8 @@ const calculateGridInsertionPosition = (position, targetElement) => {
   const targetElementId = getElementIdFromElement(targetElement);
   const elementWrapper = targetElement.parentElement;
 
-  console.log('[GRID DEBUG] Calculating insertion for position:', position, 'target:', targetElementId);
 
   if (!elementWrapper) {
-    console.warn('[GRID DEBUG] No element wrapper found');
     // Find any element to use as reference instead of null
     const anyElement = document.querySelector('.element-editor__element');
     const anyElementId = getElementIdFromElement(anyElement);
@@ -806,7 +783,6 @@ const calculateGridInsertionPosition = (position, targetElement) => {
     element.querySelector('.element-editor__element') === targetElement
   );
 
-  console.log('[GRID DEBUG] Current element index:', currentIndex, 'of', allElements.length);
 
   switch (position) {
     case 'left':
@@ -842,7 +818,6 @@ const calculateGridInsertionPosition = (position, targetElement) => {
       return { insertAfterElementId: targetElementId, dropSpot: 'bottom' };
 
     default:
-      console.warn('[GRID DEBUG] Unknown position:', position);
       return { insertAfterElementId: targetElementId || 'fallback', dropSpot: 'bottom' };
   }
 };
@@ -851,12 +826,10 @@ const calculateGridInsertionPosition = (position, targetElement) => {
 
 // Trigger SilverStripe's drag end handler with the correct parameters
 const triggerSilverStripeDragEnd = (draggedElementId, insertAfterElementId) => {
-  console.log('[GRID DEBUG] Triggering SilverStripe drag end:', { draggedElementId, insertAfterElementId });
 
   // Try multiple methods to trigger the drag end
   const elementList = document.querySelector('.elemental-editor-list');
   if (!elementList) {
-    console.warn('[GRID DEBUG] Could not find elemental-editor-list');
     return;
   }
 
@@ -867,7 +840,6 @@ const triggerSilverStripeDragEnd = (draggedElementId, insertAfterElementId) => {
     let attempts = 0;
     while (reactComponent && attempts < 10) {
       if (reactComponent.memoizedProps && reactComponent.memoizedProps.onDragEnd) {
-        console.log('[GRID DEBUG] Found React component with onDragEnd handler via fiber');
         reactComponent.memoizedProps.onDragEnd(draggedElementId, insertAfterElementId);
         return;
       }
@@ -882,7 +854,6 @@ const triggerSilverStripeDragEnd = (draggedElementId, insertAfterElementId) => {
     let attempts = 0;
     while (reactComponent && attempts < 10) {
       if (reactComponent.props && reactComponent.props.onDragEnd) {
-        console.log('[GRID DEBUG] Found React component with onDragEnd handler via instance');
         reactComponent.props.onDragEnd(draggedElementId, insertAfterElementId);
         return;
       }
@@ -892,7 +863,6 @@ const triggerSilverStripeDragEnd = (draggedElementId, insertAfterElementId) => {
   }
 
   // Method 3: Fallback - try to simulate a hover bar click for the same effect
-  console.log('[GRID DEBUG] React component access failed, falling back to hover bar simulation');
   const targetElement = document.querySelector(`[data-element-id="${insertAfterElementId}"]`) ||
                        document.querySelector('.element-editor__element');
 
@@ -900,7 +870,6 @@ const triggerSilverStripeDragEnd = (draggedElementId, insertAfterElementId) => {
     const elementWrapper = targetElement.parentElement;
     const hoverBar = elementWrapper && elementWrapper.nextElementSibling;
     if (hoverBar && hoverBar.classList.contains('element-editor__hover-bar')) {
-      console.log('[GRID DEBUG] Triggering hover bar as fallback');
       triggerHoverBarClick(hoverBar);
     }
   }
@@ -926,7 +895,6 @@ const getAreaIdFromContext = (targetElement) => {
   }
 
   // Default fallback
-  console.warn('[GRID DEBUG] Could not determine area ID, using default');
   return 1;
 };
 
@@ -946,10 +914,8 @@ const triggerHoverBarForPosition = (targetElement, position) => {
   }
 
   if (hoverBar && hoverBar.classList.contains('element-editor__hover-bar')) {
-    console.log('[GRID DEBUG] Triggering hover bar for', position, 'position');
     triggerHoverBarClick(hoverBar);
   } else {
-    console.log('[GRID DEBUG] No hover bar found for', position, 'position');
   }
 };
 
@@ -958,18 +924,14 @@ window.document.addEventListener('DOMContentLoaded', () => {
   // CRITICAL: Guard against multiple initialization (memory leak prevention)
   // Use window object to ensure this persists across bundle reloads
   if (window.__GRID_SYSTEM_INITIALIZED__) {
-    console.warn('[GRID] Already initialized (cross-bundle check), skipping duplicate setup');
     return;
   }
   window.__GRID_SYSTEM_INITIALIZED__ = true;
 
-  console.log('[GRID DEBUG] DOMContentLoaded - Starting alongside grid enhancements...');
 
   // Keep the Element enhancement (this works well)
-  console.log('[GRID DEBUG] Applying Element enhancement...');
   Injector.transform('grid-element-enhancement', (updater) => {
     updater.component('Element', withGridFunctionality);
-    console.log('[GRID DEBUG] Element enhanced with grid functionality');
   });
 
   // Removed toolbar enhancement - not needed with @dnd-kit architecture
@@ -989,7 +951,6 @@ window.document.addEventListener('DOMContentLoaded', () => {
   setTimeout(() => {
     moveGridControlsIntoCards();
 
-    console.log('[GRID DEBUG] Grid enhancements applied alongside existing system');
 
     // CRITICAL: Prevent observer from running during our own DOM updates to avoid infinite loops
     let isApplyingGridChanges = false;
@@ -1019,7 +980,6 @@ window.document.addEventListener('DOMContentLoaded', () => {
             if (node.nodeType === Node.ELEMENT_NODE) {
               if (node.classList && node.classList.contains('element-editor__element')) {
                 shouldReenhanceSystem = true;
-                console.log('[GRID DEBUG] New element detected, will re-enhance system');
               }
             }
           });
@@ -1122,7 +1082,6 @@ window.document.addEventListener('DOMContentLoaded', () => {
       // Re-enhance the system when new elements are added
       if (shouldReenhanceSystem) {
         setTimeout(() => {
-          console.log('[GRID DEBUG] Re-enhancing system due to new content...');
           isApplyingGridChanges = true;
           try {
             moveGridControlsIntoCards();
@@ -1141,7 +1100,6 @@ window.document.addEventListener('DOMContentLoaded', () => {
                            document.querySelector('.cms-content');
       
       if (elementalArea) {
-        console.log('[GRID DEBUG] Observer attached to:', elementalArea.className);
         observer.observe(elementalArea, {
           childList: true,
           subtree: true,
@@ -1150,7 +1108,6 @@ window.document.addEventListener('DOMContentLoaded', () => {
         });
       } else {
         // Fallback to body if elemental area not found, but log warning
-        console.warn('[GRID DEBUG] Elemental area not found, observing body (may impact performance)');
         observer.observe(document.body, {
           childList: true,
           subtree: true,
