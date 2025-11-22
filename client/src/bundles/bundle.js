@@ -1,5 +1,7 @@
 import Injector from 'lib/Injector';
 import React from 'react';
+import { change } from 'redux-form';
+import { connect } from 'react-redux';
 import ColumnSize from 'components/ColumnSize';
 import AddBlockToBottomButton from 'components/AddBlockToBottomButton';
 import AddBlockToTopButton from 'components/AddBlockToTopButton';
@@ -434,15 +436,48 @@ const withGridFunctionality = (OriginalElement) => {
       return originalElement;
     }
 
-    // Add grid functionality with proper onChange handlers
+    // Add grid functionality with Redux Form integration
     const gridData = element.blockSchema.grid.column || {};
+    const defaultViewport = gridData.defaultViewport || 'MD';
 
-    const handleChangeSize = () => {
-      // The REST API mutation will handle the update
+    // Helper function to trigger save button unsaved state
+    const triggerSaveButtonState = () => {
+      const saveButton = document.querySelector('[name="action_save"]');
+      if (saveButton) {
+        const removeClasses = (saveButton.getAttribute('data-btn-alternate-remove') || '').split(' ');
+        const addClasses = (saveButton.getAttribute('data-btn-alternate-add') || '').split(' ');
+        const alternateText = saveButton.getAttribute('data-text-alternate');
+        
+        removeClasses.forEach(cls => cls && saveButton.classList.remove(cls));
+        addClasses.forEach(cls => cls && saveButton.classList.add(cls));
+        if (alternateText) {
+          saveButton.innerHTML = alternateText;
+        }
+      }
     };
 
-    const handleChangeOffset = () => {
-      // The REST API mutation will handle the update
+    const handleChangeSize = (event, data) => {
+      if (props.dispatch && data && typeof data.value !== 'undefined') {
+        // Store data in ElementForm for backend processing
+        const elementFormName = `ElementForm_${element.id}`;
+        const elementFieldName = `Size${defaultViewport}`;
+        props.dispatch(change(elementFormName, elementFieldName, data.value));
+        
+        // Trigger save button to show unsaved state
+        triggerSaveButtonState();
+      }
+    };
+
+    const handleChangeOffset = (event, data) => {
+      if (props.dispatch && data && typeof data.value !== 'undefined') {
+        // Store data in ElementForm for backend processing
+        const elementFormName = `ElementForm_${element.id}`;
+        const elementFieldName = `Offset${defaultViewport}`;
+        props.dispatch(change(elementFormName, elementFieldName, data.value));
+        
+        // Trigger save button to show unsaved state
+        triggerSaveButtonState();
+      }
     };
 
     // REMOVED: Debug console.log that was creating duplicate components
@@ -458,7 +493,7 @@ const withGridFunctionality = (OriginalElement) => {
         onChangeSize: handleChangeSize,
         onChangeOffset: handleChangeOffset,
         id: `grid-${element.id}`,
-        autoSaveEnabled: true, // Enable auto-save to persist changes immediately via REST API
+        autoSaveEnabled: false, // Disabled - using Redux Form integration instead
       });
     }, [element.id, props.areaId, gridData.size, gridData.offset, ColumnSizeComponent]);
 
@@ -468,10 +503,13 @@ const withGridFunctionality = (OriginalElement) => {
 
   GridEnhancedElement.displayName = `GridEnhanced(${OriginalElement.displayName || OriginalElement.name || 'Element'})`;
   
-  // Cache the enhanced component to prevent duplicate HOC applications
-  enhancedComponentCache.set(OriginalElement, GridEnhancedElement);
+  // Connect to Redux to provide dispatch for Redux Form integration
+  const ConnectedGridEnhancedElement = connect()(GridEnhancedElement);
   
-  return GridEnhancedElement;
+  // Cache the enhanced component to prevent duplicate HOC applications
+  enhancedComponentCache.set(OriginalElement, ConnectedGridEnhancedElement);
+  
+  return ConnectedGridEnhancedElement;
 };
 
 // Global function to force re-application of grid classes (can be called from anywhere)
