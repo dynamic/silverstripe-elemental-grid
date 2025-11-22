@@ -458,8 +458,8 @@ const withGridFunctionality = (OriginalElement) => {
 
     const handleChangeSize = (event, data) => {
       if (props.dispatch && data && typeof data.value !== 'undefined') {
-        // Store data in ElementForm for backend processing
-        const elementFormName = `ElementForm_${element.id}`;
+        // Use element.Element_Form for element-level form handling
+        const elementFormName = `element.Element_Form`;
         const elementFieldName = `Size${defaultViewport}`;
         props.dispatch(change(elementFormName, elementFieldName, data.value));
         
@@ -470,8 +470,8 @@ const withGridFunctionality = (OriginalElement) => {
 
     const handleChangeOffset = (event, data) => {
       if (props.dispatch && data && typeof data.value !== 'undefined') {
-        // Store data in ElementForm for backend processing
-        const elementFormName = `ElementForm_${element.id}`;
+        // Use element.Element_Form for element-level form handling
+        const elementFormName = `element.Element_Form`;
         const elementFieldName = `Offset${defaultViewport}`;
         props.dispatch(change(elementFormName, elementFieldName, data.value));
         
@@ -493,7 +493,7 @@ const withGridFunctionality = (OriginalElement) => {
         onChangeSize: handleChangeSize,
         onChangeOffset: handleChangeOffset,
         id: `grid-${element.id}`,
-        autoSaveEnabled: false, // Disabled - using Redux Form integration instead
+        autoSaveEnabled: true, // Enables REST API auto-save for element Publish compatibility
       });
     }, [element.id, props.areaId, gridData.size, gridData.offset, ColumnSizeComponent]);
 

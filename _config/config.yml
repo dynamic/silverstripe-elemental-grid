@@ -39,6 +39,3 @@ WeDevelop\ElementalGrid\ElementalConfig:
 DNADesign\Elemental\Controllers\ElementalAreaController:
   extensions:
     - WeDevelop\ElementalGrid\Extensions\ElementalAreaControllerExtension
-SilverStripe\CMS\Model\SiteTree:
-  extensions:
-    - WeDevelop\ElementalGrid\Extensions\SiteTreeGridSaveExtension
