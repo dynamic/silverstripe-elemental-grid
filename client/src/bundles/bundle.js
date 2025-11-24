@@ -1,6 +1,5 @@
 import Injector from 'lib/Injector';
 import React from 'react';
-import ReactDOM from 'react-dom';
 import { change } from 'redux-form';
 import { connect } from 'react-redux';
 import ColumnSize from 'components/ColumnSize';
@@ -77,15 +76,15 @@ const throttle = (func, delay) => {
 
 // Function to apply Bootstrap grid classes to wrapper divs (correct Bootstrap implementation)
 const applyGridClassesToWrapper = (wrapperDiv, size, offset) => {
-  // Remove existing grid classes from wrapper
-  wrapperDiv.className = wrapperDiv.className.replace(/\bcol-lg-\d+\b/g, '');
-  wrapperDiv.className = wrapperDiv.className.replace(/\boffset-lg-\d+\b/g, '');
+  // Remove existing grid classes from wrapper (using md breakpoint)
+  wrapperDiv.className = wrapperDiv.className.replace(/\bcol-md-\d+\b/g, '');
+  wrapperDiv.className = wrapperDiv.className.replace(/\boffset-md-\d+\b/g, '');
 
   // Add new grid classes to wrapper (direct child of .row)
-  wrapperDiv.classList.add(`col-lg-${size}`);
+  wrapperDiv.classList.add(`col-md-${size}`);
 
   if (offset && offset > 0) {
-    wrapperDiv.classList.add(`offset-lg-${offset}`);
+    wrapperDiv.classList.add(`offset-md-${offset}`);
   }
 
   // Add Bootstrap no horizontal padding class to prevent padding conflicts
@@ -128,16 +127,16 @@ const applyGridClassesOnly = () => {
     elementalEditorList.classList.add('row');
   }
 
-  // Find all element cards and apply grid classes based on their grid controls
-  const allElementCards = document.querySelectorAll('.element-editor__element');
-  allElementCards.forEach((elementCard) => {
-    // Find grid controls INSIDE this element card (if they exist)
-    const control = elementCard.querySelector('.column-size-controls');
-    if (!control) return;
-
+  // Find all grid controls and apply classes to their parent element cards
+  const allControls = document.querySelectorAll('.column-size-controls');
+  allControls.forEach((control) => {
     const sizeSelect = control.querySelector('[id^="columnSize-"]');
     const offsetSelect = control.querySelector('[id^="columnOffset-"]');
     if (!sizeSelect || !offsetSelect) return;
+
+    // Find the element card (the controls are siblings of the element card)
+    const elementCard = control.previousElementSibling;
+    if (!elementCard || !elementCard.classList.contains('element-editor__element')) return;
 
     // Apply grid classes to the element card
     if (elementCard.parentElement && elementCard.parentElement.classList.contains('elemental-editor-list')) {
@@ -493,6 +492,22 @@ const withGridFunctionality = (OriginalElement) => {
         const elementFieldName = `Size${defaultViewport}`;
         props.dispatch(change(elementFormName, elementFieldName, data.value));
         
+        // Apply immediate visual update
+        // Find the control's parent container, then find the element card sibling
+        const sizeControl = document.querySelector(`#columnSize-${element.id}`);
+        if (sizeControl) {
+          const controlContainer = sizeControl.closest('.column-size-controls');
+          if (controlContainer) {
+            // The element card is the previous sibling of the control container
+            const elementCard = controlContainer.previousElementSibling;
+            if (elementCard && elementCard.classList.contains('element-editor__element')) {
+              const offsetControl = document.querySelector(`#columnOffset-${element.id}`);
+              const currentOffset = offsetControl ? parseInt(offsetControl.value, 10) : 0;
+              applyGridClassesToWrapper(elementCard, data.value, currentOffset);
+            }
+          }
+        }
+        
         // Trigger save button to show unsaved state
         triggerSaveButtonState();
       }
@@ -505,31 +520,26 @@ const withGridFunctionality = (OriginalElement) => {
         const elementFieldName = `Offset${defaultViewport}`;
         props.dispatch(change(elementFormName, elementFieldName, data.value));
         
+        // Apply immediate visual update
+        // Find the control's parent container, then find the element card sibling
+        const offsetControl = document.querySelector(`#columnOffset-${element.id}`);
+        if (offsetControl) {
+          const controlContainer = offsetControl.closest('.column-size-controls');
+          if (controlContainer) {
+            // The element card is the previous sibling of the control container
+            const elementCard = controlContainer.previousElementSibling;
+            if (elementCard && elementCard.classList.contains('element-editor__element')) {
+              const sizeControl = document.querySelector(`#columnSize-${element.id}`);
+              const currentSize = sizeControl ? parseInt(sizeControl.value, 10) : 12;
+              applyGridClassesToWrapper(elementCard, currentSize, data.value);
+            }
+          }
+        }
+        
         // Trigger save button to show unsaved state
         triggerSaveButtonState();
       }
     };
-
-    // Use React state to track the portal container
-    const [portalContainer, setPortalContainer] = React.useState(null);
-
-    // Effect to find and set the portal container (the element card wrapper)
-    React.useEffect(() => {
-      const findContainer = () => {
-        const elementCard = document.querySelector(`[data-element-id="${element.id}"]`);
-        const container = elementCard?.closest('.element-editor__element');
-        if (container && container !== portalContainer) {
-          setPortalContainer(container);
-        }
-      };
-
-      // Try to find container immediately
-      findContainer();
-
-      // Also try after a brief delay in case DOM isn't ready
-      const timer = setTimeout(findContainer, 100);
-      return () => clearTimeout(timer);
-    }, [element.id, portalContainer]);
 
     // Create ColumnSize component
     const gridComponent = React.useMemo(() => {
@@ -546,14 +556,9 @@ const withGridFunctionality = (OriginalElement) => {
       });
     }, [element.id, props.areaId, gridData.size, gridData.offset, ColumnSizeComponent]);
 
-    // If we have a portal container, render grid controls inside it using a portal
-    // Otherwise render as sibling (fallback for initial render)
-    const gridControlsElement = portalContainer
-      ? ReactDOM.createPortal(gridComponent, portalContainer)
-      : gridComponent;
-
-    // Return enhanced element with grid controls
-    return React.createElement(React.Fragment, null, originalElement, gridControlsElement);
+    // Return element with controls as siblings - no wrapper needed
+    // This allows native drag-and-drop to work without interference
+    return React.createElement(React.Fragment, null, originalElement, !shouldBeRowElement && gridComponent);
   };
 
   GridEnhancedElement.displayName = `GridEnhanced(${OriginalElement.displayName || OriginalElement.name || 'Element'})`;
@@ -565,6 +570,11 @@ const withGridFunctionality = (OriginalElement) => {
   enhancedComponentCache.set(OriginalElement, ConnectedGridEnhancedElement);
   
   return ConnectedGridEnhancedElement;
+};
+
+// Minimal enhancement - just apply grid functionality to base element
+const createGridEnhancedElement = (BaseElement) => {
+  return withGridFunctionality(BaseElement);
 };
 
 // Global function to force re-application of grid classes (can be called from anywhere)
@@ -705,7 +715,7 @@ const addDragEventListeners = () => {
   // Listen for drag end events
   document.addEventListener('dragend', (e) => {
     if (e.target.closest('.element-editor__element')) {
-      // Clear the drag flag
+      // Clear the drag flag IMMEDIATELY to allow grid class reapplication
       window.isDraggingElement = false;
       window.pauseGridClassManipulation = false;
 
@@ -718,10 +728,20 @@ const addDragEventListeners = () => {
         elementalList.classList.remove('dragging-active');
       }
 
-      // Re-apply grid classes after a short delay to ensure DOM is stable
+      // Re-apply grid classes MULTIPLE times after drag ends
+      // React reconciliation may strip classes, so reapply aggressively
+      // Flags are cleared IMMEDIATELY above so these calls will NOT be skipped
       setTimeout(() => {
-        moveGridControlsIntoCards();
-      }, 100);
+        applyGridClassesOnly();
+      }, 50);
+      
+      setTimeout(() => {
+        applyGridClassesOnly();
+      }, 150);
+      
+      setTimeout(() => {
+        applyGridClassesOnly();
+      }, 300);
 
       // Clear cache
       setTimeout(() => {
@@ -733,10 +753,21 @@ const addDragEventListeners = () => {
   // Listen for drop events
   document.addEventListener('drop', (e) => {
     if (e.target.closest('.elemental-editor-list')) {
-      // Re-apply grid classes immediately using requestAnimationFrame
+      // Re-apply grid classes MULTIPLE times to ensure they persist through React reconciliation
+      // React may remove classes during its update, so we need to reapply aggressively
       requestAnimationFrame(() => {
-        moveGridControlsIntoCards();
+        applyGridClassesOnly();
       });
+      
+      // Second application after a small delay to catch React updates
+      setTimeout(() => {
+        applyGridClassesOnly();
+      }, 50);
+      
+      // Third application to ensure persistence
+      setTimeout(() => {
+        applyGridClassesOnly();
+      }, 150);
     }
   });
 
@@ -1001,21 +1032,19 @@ const initializeGridSystem = () => {
   }, { capture: true });
 
   // Watch for pointer up anywhere to clear drag state
+  // NOTE: The dragend handler already clears both flags immediately,
+  // so this is mainly for non-drag pointer interactions
   document.addEventListener('pointerup', () => {
     if (window.isDraggingElement) {
+      // Clear flags immediately - dragend should handle this but pointerup is a fallback
       window.isDraggingElement = false;
-      // Keep pause active briefly for React to finish reconciliation
-      setTimeout(() => {
-        window.pauseGridClassManipulation = false;
-        // DO NOT call moveGridControlsIntoCards() here - let MutationObserver handle it
-        // after React has fully reconciled from the drag operation
-      }, 200);
+      window.pauseGridClassManipulation = false;
     }
   }, { capture: true });
 
-  // Keep the Element enhancement (this works well)
+  // Minimal enhancement - just inject grid controls
   Injector.transform('grid-element-enhancement', (updater) => {
-    updater.component('Element', withGridFunctionality);
+    updater.component('Element', createGridEnhancedElement, 'ElementEditor.ElementList.Element');
   });
 
   // Removed toolbar enhancement - not needed with @dnd-kit architecture
@@ -1028,7 +1057,7 @@ const initializeGridSystem = () => {
   // Set up form submission interceptor to ensure grid values are saved
   interceptFormSubmissions();
 
-  // Set up initial grid class application (portal handles rendering controls inside cards)
+  // Set up initial grid controls positioning (CSS handles visual positioning)
   setTimeout(() => {
     applyGridClassesOnly();
 
@@ -1171,7 +1200,7 @@ const initializeGridSystem = () => {
         setTimeout(() => {
           isApplyingGridChanges = true;
           try {
-            moveGridControlsIntoCards();
+            applyGridClassesOnly();
           } finally {
             setTimeout(() => { isApplyingGridChanges = false; }, 50);
           }

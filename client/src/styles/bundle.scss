@@ -49,14 +49,32 @@
   &.offset-lg-11 { margin-left: 91.666667%; }
 }
 
+/* Wrapper that contains both element and grid controls */
+.element-with-grid-wrapper {
+  border: 1px solid #dbe0e9;
+  background: #fff;
+  margin-bottom: 10px;
+  transition: all 200ms ease-in-out;
+  
+  /* This wrapper receives grid classes */
+  &.is-row {
+    .element-editor__element {
+      background: #f4f6f8;
+      padding: 1.5rem 1.5385rem;
+    }
+    
+    .column-size-controls {
+      display: none !important;
+    }
+  }
+}
+
 .element-editor__element {
   border: 0;
   min-height: 4rem;
-  outline: 1px solid #dbe0e9;
   transition: all 200ms ease-in-out;
   position: relative;
-  z-index: 15; /* Ensure elements are above drop zones (z-index: 10) for proper drag functionality */
-  padding-bottom: 120px !important; /* Make room for grid controls */
+  z-index: 15;
 
   &--expanded {
     flex: 0 0 100%;
@@ -73,35 +91,37 @@
     .grid-drop-zone {
       display: none !important;
     }
+    
+    // Hide adjacent grid controls during drag
+    + .column-size-controls {
+      display: none !important;
+    }
   }
 
   &.is-row {
     background: #f4f6f8;
     padding: 1.5rem 1.5385rem;
-    padding-bottom: 1.5rem !important; /* Row elements don't have grid controls */
+    padding-bottom: 1.5rem !important; /* Row elements don't need space for controls */
 
     .element-editor-summary {
       display: none;
+    }
+    
+    // Row elements should not have grid controls following them
+    + .column-size-controls {
+      display: none !important;
     }
   }
 
 }
 
-/* Grid controls are siblings to element cards - position them to appear inside */
+/* Grid controls genuinely inside the wrapper */
 .column-size-controls {
-  position: absolute;
-  bottom: 0;
-  left: 15px;
-  right: 15px;
-  background: white;
   border-top: 1px solid #dbe0e9;
-  padding: 10px 15px;
-  z-index: 16; /* Above element card */
-  
-  /* Target the controls that come right after an element card */
-  .element-editor__element + & {
-    margin-top: -120px; /* Pull up into the padding-bottom space of previous element */
-  }
+  padding: 12px 15px;
+  background: #f7f8fa;
+  position: relative;
+  z-index: 16;
 }
 
 /* HOVER BAR STYLING - Completely hide visual feedback while preserving functionality */
