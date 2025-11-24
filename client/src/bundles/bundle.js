@@ -76,15 +76,15 @@ const throttle = (func, delay) => {
 
 // Function to apply Bootstrap grid classes to wrapper divs (correct Bootstrap implementation)
 const applyGridClassesToWrapper = (wrapperDiv, size, offset) => {
-  // Remove existing grid classes from wrapper (using md breakpoint)
-  wrapperDiv.className = wrapperDiv.className.replace(/\bcol-md-\d+\b/g, '');
-  wrapperDiv.className = wrapperDiv.className.replace(/\boffset-md-\d+\b/g, '');
+  // Remove existing grid classes from wrapper
+  wrapperDiv.className = wrapperDiv.className.replace(/\bcol-lg-\d+\b/g, '');
+  wrapperDiv.className = wrapperDiv.className.replace(/\boffset-lg-\d+\b/g, '');
 
   // Add new grid classes to wrapper (direct child of .row)
-  wrapperDiv.classList.add(`col-md-${size}`);
+  wrapperDiv.classList.add(`col-lg-${size}`);
 
   if (offset && offset > 0) {
-    wrapperDiv.classList.add(`offset-md-${offset}`);
+    wrapperDiv.classList.add(`offset-lg-${offset}`);
   }
 
   // Add Bootstrap no horizontal padding class to prevent padding conflicts
