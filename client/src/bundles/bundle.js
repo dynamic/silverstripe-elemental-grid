@@ -1,19 +1,25 @@
 /* global window, document */
 import Injector from 'lib/Injector';
-import React from 'react';
+import React, { useState } from 'react';
 import { connect } from 'react-redux';
 import ColumnSize from 'components/ColumnSize';
+import { GridOverlay, GridToggle } from 'components/GridEditor';
 
 /**
- * Simplified Grid Bundle - minimal implementation focused on:
- * 1. Rendering grid controls (ColumnSize dropdowns)
- * 2. Moving controls into element cards for proper layout
- * 3. Intercepting form submissions to save grid values
+ * Grid Bundle - Custom grid interface for Elemental
+ * 
+ * Features:
+ * 1. Visual grid overlay showing 12-column structure
+ * 2. Grid controls (ColumnSize dropdowns) on elements
+ * 3. Toggle button to show/hide grid guides
+ * 4. Form submission interceptor for persistence
  */
 
-// Register ColumnSize component
+// Register components
 Injector.component.registerMany({
   ColumnSize,
+  GridOverlay,
+  GridToggle,
 });
 
 // Helper function to extract numeric ID from DOM element IDs
@@ -183,6 +189,72 @@ const interceptFormSubmissions = () => {
 // Cache for enhanced components to prevent duplicates
 const enhancedComponentCache = new WeakMap();
 
+// Higher-order component that enhances ElementList with grid overlay
+const withGridOverlay = (OriginalElementList) => {
+  if (enhancedComponentCache.has(OriginalElementList)) {
+    return enhancedComponentCache.get(OriginalElementList);
+  }
+
+  const GridEnhancedElementList = (props) => {
+    const [gridVisible, setGridVisible] = useState(false);
+    const GridOverlayComponent = Injector.component.get('GridOverlay');
+    const GridToggleComponent = Injector.component.get('GridToggle');
+
+    const toggleGrid = () => {
+      setGridVisible(!gridVisible);
+      // Toggle CSS class on elemental-editor-list for styling hooks
+      setTimeout(() => {
+        const list = document.querySelector('.elemental-editor-list');
+        if (list) {
+          list.classList.toggle('grid-visible', !gridVisible);
+        }
+      }, 0);
+    };
+
+    // Render original element list
+    const originalList = React.createElement(OriginalElementList, props);
+
+    // Create toolbar with grid toggle
+    const toolbar = React.createElement(
+      'div',
+      { className: 'grid-toolbar' },
+      React.createElement('span', { className: 'grid-toolbar__title' }, 'Grid Layout'),
+      React.createElement(
+        'div',
+        { className: 'grid-toolbar__controls' },
+        GridToggleComponent && React.createElement(GridToggleComponent, {
+          active: gridVisible,
+          onClick: toggleGrid,
+        })
+      )
+    );
+
+    // Create grid overlay
+    const overlay = GridOverlayComponent && React.createElement(GridOverlayComponent, {
+      visible: gridVisible,
+      gridColumns: 12,
+    });
+
+    // Wrap everything in a container
+    return React.createElement(
+      'div',
+      { className: 'grid-enhanced-editor' },
+      toolbar,
+      React.createElement(
+        'div',
+        { className: 'grid-enhanced-editor__content', style: { position: 'relative' } },
+        overlay,
+        originalList
+      )
+    );
+  };
+
+  GridEnhancedElementList.displayName = `GridEnhanced(${OriginalElementList.displayName || OriginalElementList.name || 'ElementList'})`;
+
+  enhancedComponentCache.set(OriginalElementList, GridEnhancedElementList);
+  return GridEnhancedElementList;
+};
+
 // Higher-order component that enhances Element with grid functionality
 const withGridFunctionality = (OriginalElement) => {
   // Check if already enhanced
@@ -276,7 +348,12 @@ const throttledApplyGridClasses = throttle(applyGridClassesOnly, 200);
 
 // Initialize when DOM is ready
 window.document.addEventListener('DOMContentLoaded', () => {
-  // Register the Element enhancement
+  // Register the ElementList enhancement (grid overlay)
+  Injector.transform('grid-list-enhancement', (updater) => {
+    updater.component('ElementList', withGridOverlay);
+  });
+
+  // Register the Element enhancement (grid controls)
   Injector.transform('grid-element-enhancement', (updater) => {
     updater.component('Element', withGridFunctionality);
   });

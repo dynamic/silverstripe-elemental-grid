@@ -1,4 +1,8 @@
 /* Bootstrap Grid Implementation for CMS Visual Feedback */
+
+/* Import Grid Editor styles */
+@import 'grid-editor';
+
 /* Make .elemental-editor-list a flex container (Bootstrap row) */
 .elemental-editor-list {
   display: flex !important;
