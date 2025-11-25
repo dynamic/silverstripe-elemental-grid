@@ -87,26 +87,37 @@ Injector.transform('grid-interface', (updater) => {
 - Limited by Elemental's architecture
 - May hit constraints
 
-#### C. Hybrid Approach
-Use Elemental for data management, custom UI for editing:
+#### C. Hybrid Approach (SELECTED)
+Custom UI that uses Elemental's data layer and Redux Form for persistence:
 
 ```javascript
-// Custom grid editor that uses Elemental's GraphQL/mutations
-// but completely own UI
+// Custom grid editor with own UI
+// Uses Redux Form autofill for persistence (like SS5 approach)
+// Example from working SS5 ColumnSize.js:
+this.props.actions.reduxForm.autofill(
+  `element.ElementForm_${elementId}`,
+  `PageElements_${elementId}_Size${defaultViewport}`,
+  event.target.value
+);
 ```
 
 **Pros:**
-- Best of both worlds
-- Data layer handled by Elemental
-- Full UI control
+- Full UI control - can implement Genesis Blocks style interface
+- Proven persistence mechanism (Redux Form autofill)
+- Data layer handled by Elemental's existing forms
+- Can evolve UI independently
 
 **Cons:**
-- Complexity
-- Two code paths to maintain
+- Need to understand Redux Form integration
+- Must maintain custom UI code
 
 ### Recommended Approach
 
-**Start with Option B (Enhanced Extension)**, then migrate to C if needed.
+**Option C (Hybrid)** - Custom UI with Redux Form autofill for persistence.
+
+Key insight: GraphQL has been removed from SS6 Elemental. The SS5 pattern of using
+`redux-form.autofill()` to inject values into Elemental's form state is still the
+correct approach for persisting grid values.
 
 ### Implementation Phases
 
@@ -137,15 +148,18 @@ Use Elemental for data management, custom UI for editing:
    - Must work alongside existing sortable behavior
    - Resize handles need separate drag context
 
-2. **State Management**
-   - Grid state needs real-time sync
-   - Consider local state vs Redux
-   - Optimistic updates for UX
+2. **State Management & Persistence**
+   - **Redux Form autofill is the correct approach** (not GraphQL)
+   - SS5 pattern: `reduxForm.autofill(formName, fieldName, value)`
+   - Form name format: `element.ElementForm_${elementId}`
+   - Field name format: `PageElements_${elementId}_Size${viewport}`
+   - This marks form dirty and includes values in submission
 
-3. **GraphQL Mutations**
-   - Elemental uses GraphQL for persistence
-   - Grid values may need custom mutation
-   - Batch updates for performance
+3. **Form Integration**
+   - Elemental uses Redux Form for inline editing
+   - Grid values must be injected into form state
+   - Reference: commit `69530ed7` for working autofill implementation
+   - Reference: SS5 `ColumnSize.js` in skanaaluminum site
 
 4. **CSS Framework**
    - Elemental uses Bootstrap grid
@@ -198,3 +212,47 @@ Before proceeding, decide:
 - [@dnd-kit Documentation](https://docs.dndkit.com/)
 - [SS6 Elemental Source](https://github.com/silverstripe/silverstripe-elemental)
 - Working SS5 implementation: `skanaaluminum` site
+
+---
+
+## Key Code References
+
+### SS5 Redux Form Autofill Pattern (from ColumnSize.js)
+
+```javascript
+import { autofill } from 'redux-form';
+import { compose, bindActionCreators } from 'redux';
+import { connect } from 'react-redux';
+
+// In component:
+handleChangeSize(event) {
+  const { elementId, defaultViewport } = this.props;
+  this.props.actions.reduxForm.autofill(
+    `element.ElementForm_${elementId}`,
+    `PageElements_${elementId}_Size${defaultViewport}`,
+    event.target.value
+  );
+  // Also update local state for UI
+  this.props.handleChangeSize(event);
+}
+
+// Connect to Redux:
+function mapDispatchToProps(dispatch) {
+  return {
+    actions: {
+      reduxForm: bindActionCreators({ autofill }, dispatch),
+    },
+  };
+}
+
+export default compose(
+  connect(() => {}, mapDispatchToProps)
+)(ColumnSize);
+```
+
+### Commit References
+
+| Commit | Description |
+|--------|-------------|
+| `69530ed7` | Redux Form autofill approach (Option 2 - partial) |
+| `69ae17a` | Minimal HOC approach (current stable) |
