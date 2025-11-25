@@ -147,139 +147,8 @@ const applyGridClassesOnly = () => {
 
 // DEPRECATED: This function moves DOM nodes which breaks React
 // Only used during initial setup, never during drag
-const moveGridControlsIntoCards = () => {
-  // PAUSE grid manipulation during drag operations to prevent interference
-  if (window.pauseGridClassManipulation || window.isDraggingElement) {
-    return;
-  }
-  // First clean up any incorrectly applied grid classes
-  cleanupIncorrectGridClasses();
-
-  // Add row class to the elemental-editor-list container to enable Bootstrap flexbox grid
-  const elementalEditorList = document.querySelector('.elemental-editor-list');
-  if (elementalEditorList && !elementalEditorList.classList.contains('row')) {
-    elementalEditorList.classList.add('row');
-  }
-
-  const gridControls = document.querySelectorAll('.column-size-controls');
-
-  gridControls.forEach((control) => {
-    // Find the element ID from the control inputs
-    const sizeSelect = control.querySelector('[id^="columnSize-"]');
-    const offsetSelect = control.querySelector('[id^="columnOffset-"]');
-    if (!sizeSelect || !offsetSelect) {
-      return;
-    }
-
-    // Extract element ID from the input's ID attribute (e.g., "columnSize-56" -> "56")
-    const elementId = sizeSelect.id.replace('columnSize-', '');
-
-    // Check if control is already inside an element card
-    const existingElementCard = control.closest('.element-editor__element');
-    if (existingElementCard) {
-      // In SS6, element cards are direct children of .elemental-editor-list (no wrapper divs)
-      // Apply grid classes directly to the element card
-      if (existingElementCard.parentElement && existingElementCard.parentElement.classList.contains('elemental-editor-list')) {
-        applyGridClassesToWrapper(existingElementCard, sizeSelect.value, offsetSelect.value);
-      }
-      return;
-    }
-
-    // The control is rendered as a sibling to the element card
-    // Find the SPECIFIC element card that matches this control's element ID
-    const elementalList = document.querySelector('.elemental-editor-list');
-    if (!elementalList) {
-      return;
-    }
-
-    // Find all element cards and search for the one matching this ID
-    let targetElementCard = null;
-    const allElementCards = elementalList.querySelectorAll('.element-editor__element');
-    
-    for (const card of allElementCards) {
-      // Try to find element ID from various data attributes
-      let cardElementId = card.getAttribute('data-element-id') ||
-                          card.getAttribute('data-id') ||
-                          card.getAttribute('data-block-id') ||
-                          card.getAttribute('data-element') ||
-                          card.id;
-      
-      // If no direct attribute found, try to find from element-icon-XX inside the card
-      if (!cardElementId) {
-        const icon = card.querySelector('[id^="element-icon-"]');
-        if (icon) {
-          cardElementId = icon.id.replace('element-icon-', '');
-        }
-      }
-      
-      const numericCardId = extractNumericId(cardElementId);
-      
-      if (numericCardId && numericCardId.toString() === elementId) {
-        targetElementCard = card;
-        break;
-      }
-    }
-
-    if (!targetElementCard) {
-      return;
-    }
-
-    // Move the control into the CORRECT card
-    targetElementCard.appendChild(control);
-
-    // In SS6, apply grid classes directly to the element card (no wrapper divs)
-    if (targetElementCard.parentElement && targetElementCard.parentElement.classList.contains('elemental-editor-list')) {
-      applyGridClassesToWrapper(targetElementCard, sizeSelect.value, offsetSelect.value);
-    }
-
-    // Listen for changes to the dropdowns and update classes
-    if (!sizeSelect.hasAttribute('data-grid-listener')) {
-      sizeSelect.setAttribute('data-grid-listener', 'true');
-      sizeSelect.addEventListener('change', (e) => {
-        if (targetElementCard.parentElement && targetElementCard.parentElement.classList.contains('elemental-editor-list')) {
-          applyGridClassesToWrapper(targetElementCard, e.target.value, offsetSelect.value);
-        }
-      });
-    }
-
-    if (!offsetSelect.hasAttribute('data-grid-listener')) {
-      offsetSelect.setAttribute('data-grid-listener', 'true');
-      offsetSelect.addEventListener('change', (e) => {
-        if (targetElementCard.parentElement && targetElementCard.parentElement.classList.contains('elemental-editor-list')) {
-          applyGridClassesToWrapper(targetElementCard, sizeSelect.value, e.target.value);
-        }
-      });
-    }
-  });
-
-  // Identify and handle row elements (elements without grid controls)
-  const allElementCards = document.querySelectorAll('.element-editor__element');
-  allElementCards.forEach((elementCard) => {
-    const hasGridControls = elementCard.querySelector('.column-size-controls');
-    const titleElement = elementCard.querySelector('.element-editor-header__title');
-    const isRowElement = !hasGridControls ||
-                         (titleElement && titleElement.textContent.includes('Row block'));
-
-    if (isRowElement) {
-      // Add is-row class for identification to the element card
-      if (!elementCard.classList.contains('is-row')) {
-        elementCard.classList.add('is-row');
-      }
-
-      // Explicitly hide the element-editor-summary to prevent "No preview available" from showing
-      const summaryElement = elementCard.querySelector('.element-editor-summary');
-      if (summaryElement && summaryElement.style.display !== 'none') {
-        summaryElement.style.display = 'none';
-      }
-
-      // Force row elements to be full-width breaks by applying classes to wrapper
-      const wrapperDiv = elementCard.parentElement;
-      if (wrapperDiv && wrapperDiv.parentElement && wrapperDiv.parentElement.classList.contains('elemental-editor-list')) {
-        applyGridClassesToWrapper(wrapperDiv, 12, 0);
-      }
-    }
-  });
-};
+// REMOVED: moveGridControlsIntoCards was causing issues with React reconciliation
+// Use applyGridClassesOnly instead which is safe and doesn't move DOM nodes
 
 // Function to quickly restore row element styling
 const restoreRowElementStyling = () => {
@@ -319,7 +188,6 @@ const restoreRowElementStyling = () => {
 
 // Throttled version for high-frequency events
 const throttledRestoreRowStyling = throttle(restoreRowElementStyling, 100);
-const throttledMoveGridControls = throttle(moveGridControlsIntoCards, 200);
 
 // Create a higher-order component that enhances the existing Element with grid functionality
 // CRITICAL: Prevent duplicate component creation by caching enhanced components
@@ -579,7 +447,7 @@ const createGridEnhancedElement = (BaseElement) => {
 
 // Global function to force re-application of grid classes (can be called from anywhere)
 window.reapplyGridClasses = () => {
-  moveGridControlsIntoCards();
+  applyGridClassesOnly();
 };
 
 // Intercept form submissions to ensure grid values are included
