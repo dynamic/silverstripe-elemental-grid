@@ -346,10 +346,17 @@ const withGridFunctionality = (OriginalElement) => {
         return;
       }
 
-      // Remove existing grid classes
+      // Remove existing grid classes from element
       elementCard.className = elementCard.className.replace(/\bcol-lg-\d+\b/g, '');
       elementCard.className = elementCard.className.replace(/\boffset-lg-\d+\b/g, '');
       elementCard.classList.remove('is-row');
+
+      // Also find and update the controls sibling (next element after the card)
+      const controlsSibling = elementCard.nextElementSibling;
+      if (controlsSibling && controlsSibling.classList.contains('column-size-controls')) {
+        controlsSibling.className = controlsSibling.className.replace(/\bcol-lg-\d+\b/g, '');
+        controlsSibling.className = controlsSibling.className.replace(/\boffset-lg-\d+\b/g, '');
+      }
 
       // Add grid classes
       if (shouldBeRowElement) {
@@ -361,6 +368,13 @@ const withGridFunctionality = (OriginalElement) => {
         elementCard.classList.add(`col-lg-${currentSize}`);
         if (currentOffset > 0) {
           elementCard.classList.add(`offset-lg-${currentOffset}`);
+        }
+        // Apply same classes to controls sibling
+        if (controlsSibling && controlsSibling.classList.contains('column-size-controls')) {
+          controlsSibling.classList.add(`col-lg-${currentSize}`);
+          if (currentOffset > 0) {
+            controlsSibling.classList.add(`offset-lg-${currentOffset}`);
+          }
         }
       }
     }, [element.id, shouldBeRowElement, hasGridSchema, currentSize, currentOffset]);

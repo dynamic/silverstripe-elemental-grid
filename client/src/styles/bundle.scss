@@ -558,63 +558,77 @@
 }
 
 /* COLUMN SIZE CONTROLS POSITIONING */
-/* Controls hidden by default with display:none to take ZERO flex space */
-/* They appear on element hover positioned inline with reduced space impact */
+/* Controls hidden by default, appear on hover matching element width */
 .column-size-controls {
   display: none;
-  /* Completely hidden - takes no space */
 
   hr {
     display: none;
   }
 
+  /* Horizontal layout for form fields */
   .form-row {
     margin: 0;
     display: flex;
+    flex-direction: row;
     align-items: center;
-    gap: 0.5rem;
+    gap: 1rem;
   }
 
   .form-group {
     margin: 0;
     display: flex;
+    flex-direction: row;
     align-items: center;
-    gap: 0.25rem;
+    gap: 0.35rem;
   }
 
   label {
-    font-size: 0.65rem;
-    font-weight: 600;
-    color: #666;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #555;
     margin: 0;
     white-space: nowrap;
   }
 
   .form-control {
-    font-size: 0.7rem;
-    padding: 0.1rem 0.25rem;
+    font-size: 0.875rem;
+    /* Regular size */
+    padding: 0.2rem 0.4rem;
     height: auto;
-    min-width: 65px;
-    border-radius: 3px;
+    min-width: 80px;
   }
 }
 
-/* Show controls on hover - appears below element in its own row */
+/* Show controls on hover - inherit grid width from preceding element */
 .element-editor__element:hover+.column-size-controls,
 .column-size-controls:hover,
 .column-size-controls:focus-within {
   display: flex;
+  flex-direction: row;
   align-items: center;
-  gap: 1rem;
-  padding: 0.25rem 0.5rem;
+  gap: 1.5rem;
+  padding: 0.15rem 0.5rem;
+  /* Reduced vertical padding */
   background: #f8f9fa;
   border: 1px solid #0071c4;
   border-radius: 4px;
-  margin-bottom: 0.5rem;
-  flex: 0 0 100%;
-  /* Take full row */
-  width: 100%;
-  box-shadow: 0 2px 6px rgba(0, 113, 196, 0.15);
+  margin-bottom: 0.35rem;
+  box-shadow: 0 1px 4px rgba(0, 113, 196, 0.12);
+
+  /* Override Bootstrap .col-sm-6 to force horizontal layout */
+  .col-sm-6 {
+    flex: 0 0 auto !important;
+    max-width: none !important;
+    width: auto !important;
+    padding: 0 !important;
+  }
+
+  /* Force form-row to be horizontal */
+  .form-row {
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+  }
 }
 
 /* GRID ELEMENT WRAPPER - Contains element + controls */
