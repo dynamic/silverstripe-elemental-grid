@@ -456,12 +456,95 @@
 }
 
 /* COLUMN SIZE CONTROLS POSITIONING */
-/* The controls are rendered as siblings to elements (React Fragment),
-   but CSS Grid makes them appear inside element cards */
+/* The controls are rendered inside .grid-element-wrapper alongside the element */
 .column-size-controls {
-  padding: 1rem;
-  border-top: 1px solid #e6e9ed;
-  background: white;
-  margin-left: 15px;
-  margin-right: 15px;
+  padding: 0.5rem 1rem;
+  background: #f8f9fa;
+  
+  hr {
+    display: none; /* Hide the hr separator from ColumnSize component */
+  }
+  
+  .form-row {
+    margin: 0;
+  }
+  
+  label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #666;
+    margin-bottom: 0.25rem;
+  }
+  
+  .form-control {
+    font-size: 0.8rem;
+    padding: 0.25rem 0.5rem;
+    height: auto;
+  }
 }
+
+/* GRID ELEMENT WRAPPER - Contains element + controls */
+.grid-element-wrapper {
+  position: relative;
+  margin-bottom: 0.75rem;
+  border: 1px solid #dbe0e9;
+  border-radius: 4px;
+  background: white;
+  overflow: hidden;
+  transition: box-shadow 200ms ease-in-out;
+  
+  &:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+  
+  /* Remove border from the element inside the wrapper */
+  .element-editor__element {
+    border: 0;
+    outline: none;
+    margin: 0;
+  }
+  
+  /* Row elements - full width styling */
+  &.is-row {
+    background: #f4f6f8;
+    
+    .element-editor-summary {
+      display: none;
+    }
+  }
+  
+  /* Bootstrap grid classes on wrapper */
+  &.col-lg-1 { flex: 0 0 8.333333%; max-width: 8.333333%; }
+  &.col-lg-2 { flex: 0 0 16.666667%; max-width: 16.666667%; }
+  &.col-lg-3 { flex: 0 0 25%; max-width: 25%; }
+  &.col-lg-4 { flex: 0 0 33.333333%; max-width: 33.333333%; }
+  &.col-lg-5 { flex: 0 0 41.666667%; max-width: 41.666667%; }
+  &.col-lg-6 { flex: 0 0 50%; max-width: 50%; }
+  &.col-lg-7 { flex: 0 0 58.333333%; max-width: 58.333333%; }
+  &.col-lg-8 { flex: 0 0 66.666667%; max-width: 66.666667%; }
+  &.col-lg-9 { flex: 0 0 75%; max-width: 75%; }
+  &.col-lg-10 { flex: 0 0 83.333333%; max-width: 83.333333%; }
+  &.col-lg-11 { flex: 0 0 91.666667%; max-width: 91.666667%; }
+  &.col-lg-12 { flex: 0 0 100%; max-width: 100%; }
+
+  /* Bootstrap offset classes */
+  &.offset-lg-1 { margin-left: 8.333333%; }
+  &.offset-lg-2 { margin-left: 16.666667%; }
+  &.offset-lg-3 { margin-left: 25%; }
+  &.offset-lg-4 { margin-left: 33.333333%; }
+  &.offset-lg-5 { margin-left: 41.666667%; }
+  &.offset-lg-6 { margin-left: 50%; }
+  &.offset-lg-7 { margin-left: 58.333333%; }
+  &.offset-lg-8 { margin-left: 66.666667%; }
+  &.offset-lg-9 { margin-left: 75%; }
+  &.offset-lg-10 { margin-left: 83.333333%; }
+  &.offset-lg-11 { margin-left: 91.666667%; }
+}
+
+/* Ensure elemental-editor-list handles wrappers correctly */
+.elemental-editor-list > .grid-element-wrapper {
+  padding-right: 15px;
+  padding-left: 15px;
+  box-sizing: border-box;
+}
+
