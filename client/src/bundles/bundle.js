@@ -90,7 +90,7 @@ const applyGridClassesOnly = () => {
     // Find the parent element card (controls are rendered as siblings by React)
     // Walk up to find .element-editor__element
     let elementCard = control.closest('.element-editor__element');
-    
+
     // If not inside a card, the control is a sibling - find matching card by ID
     if (!elementCard) {
       const elementId = sizeSelect.id.replace('columnSize-', '');
@@ -254,6 +254,8 @@ const withGridFunctionality = (OriginalElement) => {
       onChangeSize: handleChangeSize,
       onChangeOffset: handleChangeOffset,
       id: `grid-${element.id}`,
+      // Enable auto-save for SilverStripe 6 compatibility
+      autoSaveEnabled: true,
     });
 
     // Return enhanced element with grid controls
