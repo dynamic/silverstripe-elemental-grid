@@ -311,7 +311,6 @@ const withGridFunctionality = (OriginalElement) => {
     const isRow = hasGridSchema && element.blockSchema.grid.isRow;
 
     // Determine if this is a row element (container type that shouldn't have grid controls)
-    // Check both explicit grid schema AND fallback to element type name/title
     const shouldBeRowElement = isRow ||
       element.blockSchema.typeName === 'ElementRow' ||
       element.blockSchema.typeName === 'WeDevelop\\ElementalGrid\\Models\\ElementRow' ||
@@ -321,41 +320,80 @@ const withGridFunctionality = (OriginalElement) => {
     // Regular elements SHOULD have grid controls unless they're rows
     const shouldHaveGridControls = !shouldBeRowElement && hasGridSchema;
 
-    // Pass through original props without drag handler modifications
-    // @dnd-kit handles dragging internally - we just need to ensure grid classes are applied
+    // Get initial grid data from props
+    const gridData = hasGridSchema ? (element.blockSchema.grid.column || {}) : {};
+    const initialSize = (typeof gridData.size === 'number' && gridData.size > 0) ? gridData.size : 12;
+    const initialOffset = (typeof gridData.offset === 'number' && gridData.offset > 0) ? gridData.offset : 0;
+
+    // Use state to track current size/offset for live updates
+    const [currentSize, setCurrentSize] = React.useState(initialSize);
+    const [currentOffset, setCurrentOffset] = React.useState(initialOffset);
+
+    // Update state when props change (e.g., after save)
+    React.useEffect(() => {
+      setCurrentSize(initialSize);
+      setCurrentOffset(initialOffset);
+    }, [initialSize, initialOffset]);
+
+    // Apply grid classes directly to the element-editor__element via useLayoutEffect
+    // Using useLayoutEffect (not useEffect) to prevent visual flicker
+    React.useLayoutEffect(() => {
+      // Find the element card - use element-icon-{id} to traverse up since data-id isn't reliable
+      const icon = document.getElementById(`element-icon-${element.id}`);
+      const elementCard = icon ? icon.closest('.element-editor__element') : null;
+      if (!elementCard) {
+        console.warn(`[GRID] Could not find element card for ID ${element.id}`);
+        return;
+      }
+
+      // Remove existing grid classes
+      elementCard.className = elementCard.className.replace(/\bcol-lg-\d+\b/g, '');
+      elementCard.className = elementCard.className.replace(/\boffset-lg-\d+\b/g, '');
+      elementCard.classList.remove('is-row');
+
+      // Add grid classes
+      if (shouldBeRowElement) {
+        elementCard.classList.add('is-row', 'col-lg-12');
+        // Hide summary for rows
+        const summary = elementCard.querySelector('.element-editor-summary');
+        if (summary) summary.style.display = 'none';
+      } else if (hasGridSchema) {
+        elementCard.classList.add(`col-lg-${currentSize}`);
+        if (currentOffset > 0) {
+          elementCard.classList.add(`offset-lg-${currentOffset}`);
+        }
+      }
+    }, [element.id, shouldBeRowElement, hasGridSchema, currentSize, currentOffset]);
+
+    // Pass through original props - don't modify sortable behavior
     const enhancedProps = {
       ...props,
-      // Add data attributes for identification (non-interfering)
-      'data-element-id': element.id,
-      'data-is-row': shouldBeRowElement,
     };
 
-    // Render the original element with enhanced props
+    // Render the original element
     const originalElement = React.createElement(OriginalElement, enhancedProps);
 
-    // Get grid data - used for both grid class application and ColumnSize component
-    const gridData = hasGridSchema ? (element.blockSchema.grid.column || {}) : {};
-    // Handle 0 as valid (use default 12), but treat undefined/null as 12
-    const size = (typeof gridData.size === 'number' && gridData.size > 0) ? gridData.size : 12;
-    const offset = (typeof gridData.offset === 'number' && gridData.offset > 0) ? gridData.offset : 0;
-
-    // Create grid controls component only for non-row elements with grid schema
-    let gridComponent = null;
+    // Create grid controls for non-row elements
     if (shouldHaveGridControls && !shouldBeRowElement && ColumnSizeComponent) {
-      const handleChangeSize = () => {
-        // REST API mutation handles update
+      // Handle size/offset changes - update local state for immediate CSS update
+      const handleChangeSize = (e, data) => {
+        if (data && typeof data.value === 'number') {
+          setCurrentSize(data.value);
+        }
       };
-      const handleChangeOffset = () => {
-        // REST API mutation handles update
+      const handleChangeOffset = (e, data) => {
+        if (data && typeof data.value === 'number') {
+          setCurrentOffset(data.value);
+        }
       };
 
-      gridComponent = React.createElement(ColumnSizeComponent, {
+      const gridComponent = React.createElement(ColumnSizeComponent, {
         elementId: element.id,
         areaId: props.areaId,
-        size: size,
+        size: currentSize,
         defaultViewport: gridData.defaultViewport || 'LG',
         gridColumns: element.blockSchema.grid.gridColumns || 12,
-        offset: offset,
+        offset: currentOffset,
         onChangeSize: handleChangeSize,
         onChangeOffset: handleChangeOffset,
         id: `grid-${element.id}`,
@@ -363,44 +401,21 @@ const withGridFunctionality = (OriginalElement) => {
         className: 'column-size-controls',
         key: `grid-control-${element.id}`,
       });
+
+      // Return Fragment with element + controls (no wrapper div!)
+      return React.createElement(React.Fragment, { key: `grid-fragment-${element.id}` }, [
+        originalElement,
+        gridComponent,
+      ]);
     }
 
-    // Build wrapper class names - apply grid classes directly during render
-    const wrapperClasses = ['grid-element-wrapper'];
-    if (shouldBeRowElement) {
-      wrapperClasses.push('is-row', 'col-lg-12');
-    } else if (hasGridSchema) {
-      // Add Bootstrap grid classes
-      wrapperClasses.push(`col-lg-${size}`);
-      if (offset > 0) {
-        wrapperClasses.push(`offset-lg-${offset}`);
-      }
-    }
-
-    // Apply row styling via useEffect (for hiding summary)  
-    React.useEffect(() => {
-      if (shouldBeRowElement) {
-        const wrapper = document.querySelector(`.grid-element-wrapper[data-element-id="${element.id}"]`);
-        if (wrapper) {
-          const summaryElement = wrapper.querySelector('.element-editor-summary');
-          if (summaryElement) {
-            summaryElement.style.display = 'none';
-          }
-        }
-      }
-    }, [element.id, shouldBeRowElement]);
-
-    // Always return wrapper - with or without grid controls
-    return React.createElement('div', {
-      className: wrapperClasses.join(' '),
-      'data-element-id': element.id,
-      key: `wrapper-${element.id}`,
-    }, gridComponent ? [originalElement, gridComponent] : originalElement);
+    // For rows or elements without grid schema, just return the original
+    return originalElement;
   };
 
   GridEnhancedElement.displayName = `GridEnhanced(${OriginalElement.displayName || OriginalElement.name || 'Element'})`;
 
-  // Cache the enhanced component to prevent duplicate HOC applications
+  // Cache the enhanced component
   enhancedComponentCache.set(OriginalElement, GridEnhancedElement);
 
   return GridEnhancedElement;
