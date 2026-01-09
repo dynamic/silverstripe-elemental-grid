@@ -14,9 +14,9 @@ class ColumnSize extends Component {
     };
     this.handleChangeSize = this.handleChangeSize.bind(this);
     this.handleChangeOffset = this.handleChangeOffset.bind(this);
-    
-    // Auto-save is enabled by default in SS6 to persist changes immediately
-    // This is the only working method for grid changes in SilverStripe 6
+
+    // Auto-save is disabled by default for backward compatibility
+    // Can be enabled via props for SilverStripe 6 functionality
     this.autoSaveEnabled = props.autoSaveEnabled || false;
   }
 
@@ -64,7 +64,7 @@ class ColumnSize extends Component {
     const newSize = parseInt(event.target.value, 10);
     this.setState({ currentSize: newSize });
 
-    // Only auto-save if explicitly enabled in config
+    // Only auto-save if explicitly enabled for SilverStripe 6 compatibility
     if (this.autoSaveEnabled) {
       const viewport = this.props.defaultViewport || 'MD';
       const sizeField = `size${viewport}`;
@@ -72,6 +72,7 @@ class ColumnSize extends Component {
     }
     // Otherwise, the value will be submitted with the form via the name attribute
 
+    // Call parent callback for form integration
     if (typeof this.props.onChangeSize === 'function') {
       this.props.onChangeSize(event, {
         id: this.props.id,
@@ -86,7 +87,7 @@ class ColumnSize extends Component {
     const newOffset = parseInt(event.target.value, 10);
     this.setState({ currentOffset: newOffset });
 
-    // Only auto-save if explicitly enabled in config
+    // Only auto-save if explicitly enabled for SilverStripe 6 compatibility
     if (this.autoSaveEnabled) {
       const viewport = this.props.defaultViewport || 'MD';
       const offsetField = `offset${viewport}`;
@@ -94,6 +95,7 @@ class ColumnSize extends Component {
     }
     // Otherwise, the value will be submitted with the form via the name attribute
 
+    // Call parent callback for form integration
     if (typeof this.props.onChangeOffset === 'function') {
       this.props.onChangeOffset(event, {
         id: this.props.id,
@@ -109,7 +111,7 @@ class ColumnSize extends Component {
     // Construct URL following the same pattern as api/sort
     const controllerLink = getConfig().controllerLink.replace(/\/$/, '');
     const url = `/${controllerLink}/api/updateGrid`;
-    
+
     backend.post(url, {
       id: elementId,
       ...gridData,
@@ -130,7 +132,7 @@ class ColumnSize extends Component {
   render() {
     const sizeId = `columnSize-${this.props.elementId}`;
     const offsetId = `columnOffset-${this.props.elementId}`;
-    
+
     // Generate proper field names for form submission
     // Format: Elements[<elementId>][Size<Viewport>]
     const viewport = this.props.defaultViewport || 'MD';

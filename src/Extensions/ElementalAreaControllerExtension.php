@@ -12,6 +12,7 @@ use SilverStripe\Security\SecurityToken;
 
 /**
  * Extension for ElementalAreaController to add grid update API endpoint
+ * This provides SilverStripe 6 compatibility while maintaining backward compatibility
  */
 class ElementalAreaControllerExtension extends Extension
 {
@@ -22,6 +23,7 @@ class ElementalAreaControllerExtension extends Extension
     {
         return Injector::inst()->get(LoggerInterface::class);
     }
+
     private static $url_handlers = [
         'POST api/updateGrid' => 'apiUpdateGrid',
     ];
@@ -42,7 +44,7 @@ class ElementalAreaControllerExtension extends Extension
             'url' => $request->getURL(),
             'body_raw' => $request->getBody()
         ]);
-        
+
         // Check security token
         if (!SecurityToken::inst()->checkRequest($request)) {
             $logger->warning('Security token check failed', [
@@ -61,7 +63,7 @@ class ElementalAreaControllerExtension extends Extension
             'data' => $data,
             'json_error' => json_last_error_msg()
         ]);
-        
+
         if (!$data || !isset($data['id'])) {
             $logger->error('Invalid request data', ['body' => $request->getBody()]);
             return $this->owner->getResponse()
@@ -69,10 +71,10 @@ class ElementalAreaControllerExtension extends Extension
                 ->setStatusCode(400)
                 ->setBody(json_encode(['error' => 'Missing required field: id']));
         }
-        
+
         $id = $data['id'];
         $logger->debug('Element ID extracted', ['id' => $id]);
-        
+
         $element = BaseElement::get()->byID($id);
 
         if (!$element) {
@@ -107,7 +109,7 @@ class ElementalAreaControllerExtension extends Extension
                 $updatedFields[$jsonKey] = $data[$jsonKey];
             }
         }
-        
+
         $logger->debug('Fields to update', ['updated_fields' => $updatedFields]);
 
         // Write changes immediately without versioning
