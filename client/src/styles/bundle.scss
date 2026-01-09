@@ -454,3 +454,14 @@
 .optionset-image-field:not(.form-group) > .radio {
   margin-right: 10px;
 }
+
+/* COLUMN SIZE CONTROLS POSITIONING */
+/* The controls are rendered as siblings to elements (React Fragment),
+   but CSS Grid makes them appear inside element cards */
+.column-size-controls {
+  padding: 1rem;
+  border-top: 1px solid #e6e9ed;
+  background: white;
+  margin-left: 15px;
+  margin-right: 15px;
+}

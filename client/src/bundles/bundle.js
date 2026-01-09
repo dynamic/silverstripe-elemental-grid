@@ -164,15 +164,15 @@ const moveGridControlsIntoCards = () => {
     // Find all element cards and search for the one matching this ID
     let targetElementCard = null;
     const allElementCards = elementalList.querySelectorAll('.element-editor__element');
-    
+
     for (const card of allElementCards) {
       // Try to find element ID from various data attributes
       let cardElementId = card.getAttribute('data-element-id') ||
-                          card.getAttribute('data-id') ||
-                          card.getAttribute('data-block-id') ||
-                          card.getAttribute('data-element') ||
-                          card.id;
-      
+        card.getAttribute('data-id') ||
+        card.getAttribute('data-block-id') ||
+        card.getAttribute('data-element') ||
+        card.id;
+
       // If no direct attribute found, try to find from element-icon-XX inside the card
       if (!cardElementId) {
         const icon = card.querySelector('[id^="element-icon-"]');
@@ -180,9 +180,9 @@ const moveGridControlsIntoCards = () => {
           cardElementId = icon.id.replace('element-icon-', '');
         }
       }
-      
+
       const numericCardId = extractNumericId(cardElementId);
-      
+
       if (numericCardId && numericCardId.toString() === elementId) {
         targetElementCard = card;
         break;
@@ -194,8 +194,8 @@ const moveGridControlsIntoCards = () => {
       return;
     }
 
-    // Move the control into the CORRECT card
-    targetElementCard.appendChild(control);
+    // Grid classes are applied via useLayoutEffect in the HOC
+    // DOM manipulation is not needed - React manages the structure
 
     // In SS6, apply grid classes directly to the element card (no wrapper divs)
     if (targetElementCard.parentElement && targetElementCard.parentElement.classList.contains('elemental-editor-list')) {
@@ -228,7 +228,7 @@ const moveGridControlsIntoCards = () => {
     const hasGridControls = elementCard.querySelector('.column-size-controls');
     const titleElement = elementCard.querySelector('.element-editor-header__title');
     const isRowElement = !hasGridControls ||
-                         (titleElement && titleElement.textContent.includes('Row block'));
+      (titleElement && titleElement.textContent.includes('Row block'));
 
     if (isRowElement) {
       // Add is-row class for identification to the element card
@@ -262,7 +262,7 @@ const restoreRowElementStyling = () => {
     const hasGridControls = elementCard.querySelector('.column-size-controls');
     const titleElement = elementCard.querySelector('.element-editor-header__title');
     const isRowElement = !hasGridControls ||
-                         (titleElement && titleElement.textContent.includes('Row block'));
+      (titleElement && titleElement.textContent.includes('Row block'));
 
     if (isRowElement) {
       // Add is-row class if missing
@@ -321,184 +321,117 @@ const withGridFunctionality = (OriginalElement) => {
     // Regular elements SHOULD have grid controls unless they're rows
     const shouldHaveGridControls = !shouldBeRowElement && hasGridSchema;
 
-    // NEW: Enhanced drag start handler to preserve row state
-    const originalOnDragStart = props.onDragStart;
-    const enhancedOnDragStart = React.useCallback((e) => {
-      if (originalOnDragStart) {
-        originalOnDragStart(e);
-      }
-
-      // Mark row elements during drag start for preservation
-      if (shouldBeRowElement) {
-        // Add data attribute to help with restoration
-        setTimeout(() => {
-          const elementCard = document.querySelector(`[data-element-id="${element.id}"]`);
-          const elementCardElement = elementCard && elementCard.closest('.element-editor__element');
-          if (elementCardElement) {
-            elementCardElement.setAttribute('data-grid-row-element', 'true');
-          }
-        }, 0);
-      }
-    }, [originalOnDragStart, shouldBeRowElement, element.id]);
-
-    // NEW: Enhanced drag over handler for immediate restoration
-    const originalOnDragOver = props.onDragOver;
-    const enhancedOnDragOver = React.useCallback((e) => {
-      if (originalOnDragOver) {
-        originalOnDragOver(e);
-      }
-
-      // If this is a row element being dragged over, immediately restore styling
-      if (shouldBeRowElement && window.isDraggingElement) {
-        restoreRowElementStyling();
-      }
-    }, [originalOnDragOver, shouldBeRowElement]);
-
-    // NEW: Enhanced drag end handler to re-apply grid functionality after drag
-    const originalOnDragEnd = props.onDragEnd;
-    const enhancedOnDragEnd = React.useCallback((e) => {
-      if (originalOnDragEnd) {
-        originalOnDragEnd(e);
-      }
-
-      // Re-apply grid controls after drag completes
-      setTimeout(() => {
-        moveGridControlsIntoCards();
-        if (shouldBeRowElement) {
-          restoreRowElementStyling();
-        }
-      }, 100);
-    }, [originalOnDragEnd, shouldBeRowElement]);
-
-    // NEW: Create enhanced props with drag handlers and declarative classes
+    // Pass through original props without drag handler modifications
+    // @dnd-kit handles dragging internally - we just need to ensure grid classes are applied
     const enhancedProps = {
       ...props,
-      onDragEnd: enhancedOnDragEnd,
-      onDragStart: enhancedOnDragStart,
-      onDragOver: enhancedOnDragOver,
-      // NEW: Add data attributes for better identification
+      // Add data attributes for identification (non-interfering)
       'data-element-id': element.id,
       'data-is-row': shouldBeRowElement,
-      // NEW: Add CSS classes declaratively to help persist through React re-renders
-      className: `${props.className || ''} ${shouldBeRowElement ? 'grid-row-element' : 'grid-regular-element'}`.trim()
     };
 
     // Render the original element with enhanced props
     const originalElement = React.createElement(OriginalElement, enhancedProps);
 
-    // Post-render layout effect to ensure grid classes are applied before browser paint
-    React.useLayoutEffect(() => {
-      // Apply grid functionality for regular elements
-      if (shouldHaveGridControls && ColumnSizeComponent) {
-        // Apply immediately before browser paint to prevent visual shifts
-        moveGridControlsIntoCards();
-      }
+    // Get grid data - used for both grid class application and ColumnSize component
+    const gridData = hasGridSchema ? (element.blockSchema.grid.column || {}) : {};
+    // Handle 0 as valid (use default 12), but treat undefined/null as 12
+    const size = (typeof gridData.size === 'number' && gridData.size > 0) ? gridData.size : 12;
+    const offset = (typeof gridData.offset === 'number' && gridData.offset > 0) ? gridData.offset : 0;
 
-      // NEW: Apply row styling for row elements
-      if (shouldBeRowElement) {
-        setTimeout(() => {
-          const elementCard = document.querySelector(`[data-element-id="${element.id}"]`);
-          const elementCardElement = elementCard && elementCard.closest('.element-editor__element');
-          if (elementCardElement) {
-            // Ensure row class is applied declaratively through DOM
-            if (!elementCardElement.classList.contains('is-row')) {
-              elementCardElement.classList.add('is-row');
-            }
+    // Create grid controls component only for non-row elements with grid schema
+    let gridComponent = null;
+    if (shouldHaveGridControls && !shouldBeRowElement && ColumnSizeComponent) {
+      const handleChangeSize = () => {
+        // REST API mutation handles update
+      };
+      const handleChangeOffset = () => {
+        // REST API mutation handles update
+      };
 
-            // Explicitly hide the element-editor-summary to prevent "No preview available" from showing
-            const summaryElement = elementCardElement.querySelector('.element-editor-summary');
-            if (summaryElement && summaryElement.style.display !== 'none') {
-              summaryElement.style.display = 'none';
-            }
-
-            // Mark as processed to help MutationObserver
-            elementCardElement.setAttribute('data-grid-processed', 'true');
-
-            // Apply wrapper grid classes
-            const wrapperDiv = elementCardElement.parentElement;
-            if (wrapperDiv && wrapperDiv.parentElement && wrapperDiv.parentElement.classList.contains('elemental-editor-list')) {
-              applyGridClassesToWrapper(wrapperDiv, 12, 0);
-            }
-          }
-        }, 0);
-      }
-    }, [element.id, shouldHaveGridControls, shouldBeRowElement, ColumnSizeComponent]);
-
-    // If this is a row element (container), don't add grid controls
-    if (shouldBeRowElement) {
-      return originalElement;
-    }
-
-    // If this element doesn't have grid schema or ColumnSize component not available, return as-is
-    if (!shouldHaveGridControls || !ColumnSizeComponent) {
-      return originalElement;
-    }
-
-    // Add grid functionality with proper onChange handlers
-    const gridData = element.blockSchema.grid.column || {};
-
-    const handleChangeSize = () => {
-      // The REST API mutation will handle the update
-    };
-
-    const handleChangeOffset = () => {
-      // The REST API mutation will handle the update
-    };
-
-    // REMOVED: Debug console.log that was creating duplicate components
-    // Only create ColumnSize component once per render
-    const gridComponent = React.useMemo(() => {
-      return React.createElement(ColumnSizeComponent, {
+      gridComponent = React.createElement(ColumnSizeComponent, {
         elementId: element.id,
-        areaId: props.areaId, // Pass areaId from props
-        size: gridData.size || 12,
+        areaId: props.areaId,
+        size: size,
         defaultViewport: gridData.defaultViewport || 'LG',
         gridColumns: element.blockSchema.grid.gridColumns || 12,
-        offset: gridData.offset || 0,
+        offset: offset,
         onChangeSize: handleChangeSize,
         onChangeOffset: handleChangeOffset,
         id: `grid-${element.id}`,
-        autoSaveEnabled: true, // Enable auto-save to persist changes immediately via REST API
+        autoSaveEnabled: true,
+        className: 'column-size-controls',
+        key: `grid-control-${element.id}`,
       });
-    }, [element.id, props.areaId, gridData.size, gridData.offset, ColumnSizeComponent]);
+    }
 
-    // Return enhanced element with grid controls
-    return React.createElement(React.Fragment, null, originalElement, gridComponent);
+    // Build wrapper class names - apply grid classes directly during render
+    const wrapperClasses = ['grid-element-wrapper'];
+    if (shouldBeRowElement) {
+      wrapperClasses.push('is-row', 'col-lg-12');
+    } else if (hasGridSchema) {
+      // Add Bootstrap grid classes
+      wrapperClasses.push(`col-lg-${size}`);
+      if (offset > 0) {
+        wrapperClasses.push(`offset-lg-${offset}`);
+      }
+    }
+
+    // Apply row styling via useEffect (for hiding summary)  
+    React.useEffect(() => {
+      if (shouldBeRowElement) {
+        const wrapper = document.querySelector(`.grid-element-wrapper[data-element-id="${element.id}"]`);
+        if (wrapper) {
+          const summaryElement = wrapper.querySelector('.element-editor-summary');
+          if (summaryElement) {
+            summaryElement.style.display = 'none';
+          }
+        }
+      }
+    }, [element.id, shouldBeRowElement]);
+
+    // Always return wrapper - with or without grid controls
+    return React.createElement('div', {
+      className: wrapperClasses.join(' '),
+      'data-element-id': element.id,
+      key: `wrapper-${element.id}`,
+    }, gridComponent ? [originalElement, gridComponent] : originalElement);
   };
 
   GridEnhancedElement.displayName = `GridEnhanced(${OriginalElement.displayName || OriginalElement.name || 'Element'})`;
-  
+
   // Cache the enhanced component to prevent duplicate HOC applications
   enhancedComponentCache.set(OriginalElement, GridEnhancedElement);
-  
+
   return GridEnhancedElement;
 };
 
-// Global function to force re-application of grid classes (can be called from anywhere)
-window.reapplyGridClasses = () => {
-  moveGridControlsIntoCards();
-};
+// NOTE: window.reapplyGridClasses disabled - grid classes are now managed by React HOC
+// Calling moveGridControlsIntoCards() would overwrite the correct React-applied classes
+// window.reapplyGridClasses = () => {
+//   moveGridControlsIntoCards();
+// };
 
 // Intercept form submissions to ensure grid values are included
 const interceptFormSubmissions = () => {
   // Listen for form submissions in the CMS
   document.addEventListener('submit', (e) => {
     const form = e.target;
-    
+
     // Check if this is an element form that might have grid controls
     if (!form.closest('.cms-content') && !form.querySelector('[name^="Elements"]')) {
       return; // Not a CMS form, ignore
     }
-    
+
     // Find all grid control dropdowns in the page
     const sizeDropdowns = document.querySelectorAll('[id^="columnSize-"]');
     const offsetDropdowns = document.querySelectorAll('[id^="columnOffset-"]');
-    
+
     // Add hidden inputs for each grid control to ensure values are submitted
     sizeDropdowns.forEach((dropdown) => {
       const fieldName = dropdown.getAttribute('name');
       const fieldValue = dropdown.value;
-      
+
       if (fieldName && fieldValue) {
         // Check if field already exists in form
         const existingField = form.querySelector(`input[name="${fieldName}"]`);
@@ -514,11 +447,11 @@ const interceptFormSubmissions = () => {
         }
       }
     });
-    
+
     offsetDropdowns.forEach((dropdown) => {
       const fieldName = dropdown.getAttribute('name');
       const fieldValue = dropdown.value;
-      
+
       if (fieldName && fieldValue) {
         // Check if field already exists in form
         const existingField = form.querySelector(`input[name="${fieldName}"]`);
@@ -535,7 +468,7 @@ const interceptFormSubmissions = () => {
       }
     });
   }, true); // Use capture phase to ensure we intercept before React
-  
+
   console.log('[GRID DEBUG] Form submission interceptor installed');
 };
 
@@ -582,10 +515,10 @@ const addDragEventListeners = () => {
         });
 
         const elementId = draggedElement.getAttribute('data-element-id') ||
-                         draggedElement.getAttribute('data-id') ||
-                         draggedElement.getAttribute('data-block-id') ||
-                         draggedElement.getAttribute('data-element') ||
-                         draggedElement.id;
+          draggedElement.getAttribute('data-id') ||
+          draggedElement.getAttribute('data-block-id') ||
+          draggedElement.getAttribute('data-element') ||
+          draggedElement.id;
         const numericElementId = extractNumericId(elementId);
         window.currentDraggedElement = numericElementId;
         console.log('[GRID DEBUG] Captured dragged element ID on drag start:', elementId, '-> converted to numeric:', numericElementId);
@@ -595,9 +528,9 @@ const addDragEventListeners = () => {
           const childWithId = draggedElement.querySelector('[data-element-id], [data-id], [data-block-id], [id]');
           if (childWithId) {
             const childId = childWithId.getAttribute('data-element-id') ||
-                           childWithId.getAttribute('data-id') ||
-                           childWithId.getAttribute('data-block-id') ||
-                           childWithId.id;
+              childWithId.getAttribute('data-id') ||
+              childWithId.getAttribute('data-block-id') ||
+              childWithId.id;
             const numericChildId = extractNumericId(childId);
             window.currentDraggedElement = numericChildId;
             console.log('[GRID DEBUG] Found element ID in child element:', childId, '-> converted to numeric:', numericChildId);
@@ -721,10 +654,10 @@ const getElementIdFromElement = (element) => {
 
   // Try direct attributes first
   const directId = element.getAttribute('data-element-id') ||
-                  element.getAttribute('data-id') ||
-                  element.getAttribute('data-block-id') ||
-                  element.getAttribute('data-element') ||
-                  element.id;
+    element.getAttribute('data-id') ||
+    element.getAttribute('data-block-id') ||
+    element.getAttribute('data-element') ||
+    element.id;
 
   if (directId) return extractNumericId(directId);
 
@@ -732,9 +665,9 @@ const getElementIdFromElement = (element) => {
   const childWithId = element.querySelector('[data-element-id], [data-id], [data-block-id], [id]');
   if (childWithId) {
     const childId = childWithId.getAttribute('data-element-id') ||
-                   childWithId.getAttribute('data-id') ||
-                   childWithId.getAttribute('data-block-id') ||
-                   childWithId.id;
+      childWithId.getAttribute('data-id') ||
+      childWithId.getAttribute('data-block-id') ||
+      childWithId.id;
     return extractNumericId(childId);
   }
 
@@ -856,7 +789,7 @@ const triggerSilverStripeDragEnd = (draggedElementId, insertAfterElementId) => {
   // Method 3: Fallback - try to simulate a hover bar click for the same effect
   console.log('[GRID DEBUG] React component access failed, falling back to hover bar simulation');
   const targetElement = document.querySelector(`[data-element-id="${insertAfterElementId}"]`) ||
-                       document.querySelector('.element-editor__element');
+    document.querySelector('.element-editor__element');
 
   if (targetElement) {
     const elementWrapper = targetElement.parentElement;
@@ -935,193 +868,34 @@ window.document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Removed toolbar enhancement - not needed with @dnd-kit architecture
-  // console.log('[GRID DEBUG] Applying ElementToolbar enhancement...');
-  // Injector.transform('elemental-grid-toolbar', (updater) => {
-  //   updater.component('ElementToolbar', OverruledToolbar);
-  //   console.log('[GRID DEBUG] ElementToolbar enhanced');
-  // });
 
-  // Set up drag event listeners (keep existing functionality)
-  addDragEventListeners();
-  
+  // NOTE: Native drag event listeners removed - @dnd-kit uses pointer events internally
+  // and native HTML5 drag events conflict with its state management.
+  // Grid class application now happens via React useLayoutEffect in withGridFunctionality.
+
   // Set up form submission interceptor to ensure grid values are saved
   interceptFormSubmissions();
 
-  // Set up DOM manipulation to move controls inside cards
+  // NOTE: moveGridControlsIntoCards() DISABLED on initial load
+  // Grid classes are now applied directly by the React HOC (withGridFunctionality)
+  // Calling moveGridControlsIntoCards() here would OVERWRITE the correct React-applied classes
   setTimeout(() => {
-    moveGridControlsIntoCards();
+    // moveGridControlsIntoCards(); // DISABLED - conflicts with React
+    console.log('[GRID DEBUG] Grid enhancements applied - initial setup complete (React HOC manages classes)');
 
-    console.log('[GRID DEBUG] Grid enhancements applied alongside existing system');
-
-    // CRITICAL: Prevent observer from running during our own DOM updates to avoid infinite loops
-    let isApplyingGridChanges = false;
-
-    // Enhanced observer to detect React re-renders and maintain grid enhancements
-    const observer = new MutationObserver((mutations) => {
-      // CRITICAL: Skip if we're currently applying grid changes to prevent infinite recursion
-      if (isApplyingGridChanges) {
-        return;
-      }
-
-      let shouldReapply = false;
-      let shouldRestoreRowStyling = false;
-      let shouldReenhanceSystem = false;
-
-      mutations.forEach(mutation => {
-        // Check for added/removed nodes (new elements or React re-renders)
-        if (mutation.type === 'childList' && (mutation.addedNodes.length || mutation.removedNodes.length)) {
-          // Check if this is during a drag operation
-          if (window.isDraggingElement) {
-            shouldRestoreRowStyling = true;
-          }
-          shouldReapply = true;
-
-          // Check if new elements were added that need grid enhancements
-          mutation.addedNodes.forEach(node => {
-            if (node.nodeType === Node.ELEMENT_NODE) {
-              if (node.classList && node.classList.contains('element-editor__element')) {
-                shouldReenhanceSystem = true;
-                console.log('[GRID DEBUG] New element detected, will re-enhance system');
-              }
-            }
-          });
-        }
-
-        // Check for class changes that might indicate drag operations or React re-renders
-        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
-          const { target } = mutation;
-
-          // Check if a wrapper div (direct child of .elemental-editor-list) lost its grid classes
-          if (target.parentElement && target.parentElement.classList.contains('elemental-editor-list')) {
-            const hasAnyGridClass = target.classList.contains('col-lg-1') ||
-                                   target.classList.contains('col-lg-2') ||
-                                   target.classList.contains('col-lg-3') ||
-                                   target.classList.contains('col-lg-4') ||
-                                   target.classList.contains('col-lg-5') ||
-                                   target.classList.contains('col-lg-6') ||
-                                   target.classList.contains('col-lg-7') ||
-                                   target.classList.contains('col-lg-8') ||
-                                   target.classList.contains('col-lg-9') ||
-                                   target.classList.contains('col-lg-10') ||
-                                   target.classList.contains('col-lg-11') ||
-                                   target.classList.contains('col-lg-12');
-
-            if (!hasAnyGridClass) {
-              shouldReapply = true;
-
-              if (window.isDraggingElement) {
-                shouldRestoreRowStyling = true;
-              }
-            }
-          }
-
-          // Check if an element card lost the is-row class during drag operations
-          if (target.classList.contains('element-editor__element')) {
-            const titleElement = target.querySelector('.element-editor-header__title');
-            const hasGridControls = target.querySelector('.column-size-controls');
-            const shouldBeRow = !hasGridControls ||
-                               (titleElement && titleElement.textContent.includes('Row block'));
-
-            if (shouldBeRow && !target.classList.contains('is-row')) {
-              shouldRestoreRowStyling = true;
-
-              if (window.isDraggingElement) {
-                // Immediate restoration during drag
-                target.classList.add('is-row');
-              }
-            }
-          }
-
-          // Detect React component re-renders during drag by checking for fresh DOM nodes
-          if (window.isDraggingElement && target.parentElement && target.parentElement.classList.contains('elemental-editor-list')) {
-            // If an element wrapper gets fresh className during drag, it might be a React re-render
-            if (!target.hasAttribute('data-grid-processed')) {
-              shouldRestoreRowStyling = true;
-              shouldReapply = true;
-            }
-          }
-        }
-      });
-
-      // Prioritize row styling restoration during drag operations
-      if (shouldRestoreRowStyling && window.isDraggingElement) {
-        queueMicrotask(() => {
-          isApplyingGridChanges = true;
-          try {
-            restoreRowElementStyling();
-          } finally {
-            // Use setTimeout to reset flag after DOM updates settle
-            setTimeout(() => { isApplyingGridChanges = false; }, 0);
-          }
-        });
-      }
-
-      if (shouldReapply) {
-        // Use different timing based on whether we're in a drag operation
-        if (window.isDraggingElement) {
-          // Faster response during drag
-          queueMicrotask(() => {
-            isApplyingGridChanges = true;
-            try {
-              throttledMoveGridControls();
-            } finally {
-              setTimeout(() => { isApplyingGridChanges = false; }, 0);
-            }
-          });
-        } else {
-          // Normal response outside drag
-          queueMicrotask(() => {
-            isApplyingGridChanges = true;
-            try {
-              moveGridControlsIntoCards();
-            } finally {
-              setTimeout(() => { isApplyingGridChanges = false; }, 0);
-            }
-          });
-        }
-      }
-
-      // Re-enhance the system when new elements are added
-      if (shouldReenhanceSystem) {
-        setTimeout(() => {
-          console.log('[GRID DEBUG] Re-enhancing system due to new content...');
-          isApplyingGridChanges = true;
-          try {
-            moveGridControlsIntoCards();
-          } finally {
-            setTimeout(() => { isApplyingGridChanges = false; }, 50);
-          }
-        }, 100);
-      }
-    });
-
-    // CRITICAL: Only observe the main content area, not entire document.body
-    // This prevents observer from firing during save operations on other parts of the page
-    const observeElementalArea = () => {
-      const elementalArea = document.querySelector('.elemental-editor-list') || 
-                           document.querySelector('[data-schema-component="ElementalArea"]') ||
-                           document.querySelector('.cms-content');
-      
-      if (elementalArea) {
-        console.log('[GRID DEBUG] Observer attached to:', elementalArea.className);
-        observer.observe(elementalArea, {
-          childList: true,
-          subtree: true,
-          attributes: true,
-          attributeFilter: ['class']
-        });
-      } else {
-        // Fallback to body if elemental area not found, but log warning
-        console.warn('[GRID DEBUG] Elemental area not found, observing body (may impact performance)');
-        observer.observe(document.body, {
-          childList: true,
-          subtree: true,
-          attributes: true,
-          attributeFilter: ['class']
-        });
-      }
-    };
-    
-    observeElementalArea();
+    // NOTE: MutationObserver DISABLED
+    // The observer was causing conflicts with @dnd-kit during drag operations.
+    // @dnd-kit manages its own DOM updates, and our observer triggering
+    // moveGridControlsIntoCards() during those updates causes React
+    // reconciliation errors (removeChild error).
+    // 
+    // Grid classes are now managed via:
+    // 1. Initial application on DOMContentLoaded (above)
+    // 2. React useLayoutEffect in withGridFunctionality HOC
+    // 3. ColumnSize component onChange handlers
+    //
+    // If new elements don't get grid classes after save, consider
+    // implementing a lighter-weight solution that doesn't conflict
+    // with @dnd-kit (e.g., hook into SilverStripe's form save events).
   }, 1000);
 });

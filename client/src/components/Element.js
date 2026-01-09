@@ -322,8 +322,6 @@ const Element = (props) => {
         })()}
     </div>
   );
-
-  return content;
 };
 
 function mapStateToProps(state, ownProps) {
