@@ -600,21 +600,25 @@
   }
 }
 
-/* Show controls on hover - inherit grid width from preceding element */
+/* Show controls on hover - ALWAYS appear below element (full width) */
 .element-editor__element:hover+.column-size-controls,
 .column-size-controls:hover,
 .column-size-controls:focus-within {
   display: flex;
   flex-direction: row;
+  flex-wrap: wrap;
+  /* Allow stacking on small columns */
   align-items: center;
-  gap: 1.5rem;
-  padding: 0.15rem 0.5rem;
-  /* Reduced vertical padding */
+  gap: 1rem;
+  padding: 0.25rem 0.75rem;
   background: #f8f9fa;
   border: 1px solid #0071c4;
   border-radius: 4px;
   margin-bottom: 0.35rem;
   box-shadow: 0 1px 4px rgba(0, 113, 196, 0.12);
+  /* Force controls to take full row - always appear BELOW element */
+  flex: 0 0 100% !important;
+  width: 100% !important;
 
   /* Override Bootstrap .col-sm-6 to force horizontal layout */
   .col-sm-6 {
@@ -624,10 +628,23 @@
     padding: 0 !important;
   }
 
-  /* Force form-row to be horizontal */
+  /* Force form-row to be horizontal but allow wrap */
   .form-row {
     flex-direction: row !important;
-    flex-wrap: nowrap !important;
+    flex-wrap: wrap !important;
+    gap: 0.75rem;
+  }
+
+  /* Bigger fonts and wider dropdowns */
+  label {
+    font-size: 0.875rem !important;
+    font-weight: 500;
+  }
+
+  .form-control {
+    font-size: 0.9rem !important;
+    min-width: 110px !important;
+    padding: 0.25rem 0.5rem !important;
   }
 }
 
