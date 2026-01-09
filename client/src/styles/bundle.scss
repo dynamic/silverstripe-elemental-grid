@@ -600,7 +600,7 @@
   }
 }
 
-/* Show controls on hover - ALWAYS appear below element (full width) */
+/* Show controls on hover - inherit col/offset from element (match width) */
 .element-editor__element:hover+.column-size-controls,
 .column-size-controls:hover,
 .column-size-controls:focus-within {
@@ -616,9 +616,7 @@
   border-radius: 4px;
   margin-bottom: 0.35rem;
   box-shadow: 0 1px 4px rgba(0, 113, 196, 0.12);
-  /* Force controls to take full row - always appear BELOW element */
-  flex: 0 0 100% !important;
-  width: 100% !important;
+  /* Inherit grid width from element - don't force 100% */
 
   /* Override Bootstrap .col-sm-6 to force horizontal layout */
   .col-sm-6 {
