@@ -379,6 +379,49 @@ const withGridFunctionality = (OriginalElement) => {
       }
     }, [element.id, shouldBeRowElement, hasGridSchema, currentSize, currentOffset]);
 
+    // Setup popover-style positioning for controls on hover
+    React.useEffect(() => {
+      const icon = document.getElementById(`element-icon-${element.id}`);
+      const elementCard = icon ? icon.closest('.element-editor__element') : null;
+      if (!elementCard) return;
+
+      const controlsSibling = elementCard.nextElementSibling;
+      if (!controlsSibling || !controlsSibling.classList.contains('column-size-controls')) return;
+
+      // Get the parent container for relative positioning
+      const parentList = elementCard.parentElement;
+      if (parentList && !parentList.style.position) {
+        parentList.style.position = 'relative';
+      }
+
+      const showControls = () => {
+        // Position controls absolutely below element
+        controlsSibling.style.position = 'absolute';
+        controlsSibling.style.top = (elementCard.offsetTop + elementCard.offsetHeight) + 'px';
+        controlsSibling.style.left = elementCard.offsetLeft + 'px';
+        controlsSibling.style.width = elementCard.offsetWidth + 'px';
+        controlsSibling.style.zIndex = '100';
+        controlsSibling.classList.add('is-visible');
+      };
+
+      const hideControls = (e) => {
+        // Only hide if not hovering on element or controls
+        if (!elementCard.contains(e.relatedTarget) && !controlsSibling.contains(e.relatedTarget)) {
+          controlsSibling.classList.remove('is-visible');
+        }
+      };
+
+      elementCard.addEventListener('mouseenter', showControls);
+      elementCard.addEventListener('mouseleave', hideControls);
+      controlsSibling.addEventListener('mouseleave', hideControls);
+
+      return () => {
+        elementCard.removeEventListener('mouseenter', showControls);
+        elementCard.removeEventListener('mouseleave', hideControls);
+        controlsSibling.removeEventListener('mouseleave', hideControls);
+      };
+    }, [element.id]);
+
     // Pass through original props - don't modify sortable behavior
     const enhancedProps = {
       ...props,

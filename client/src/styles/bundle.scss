@@ -557,20 +557,36 @@
   margin-right: 10px;
 }
 
-/* COLUMN SIZE CONTROLS POSITIONING */
-/* Controls hidden by default, appear on hover matching element width */
+/* COLUMN SIZE CONTROLS - Popover style positioning */
+/* Hidden by default, positioned absolutely via JS on hover */
 .column-size-controls {
-  display: none;
+  display: none !important;
+  background: #fff;
+  border: 1px solid #0071c4;
+  border-radius: 4px;
+  padding: 0.5rem 0.75rem;
+  box-shadow: 0 4px 12px rgba(0, 113, 196, 0.15);
+  box-sizing: border-box;
 
   hr {
     display: none;
+  }
+
+  /* Shown via JS .is-visible class */
+  &.is-visible {
+    display: flex !important;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem;
   }
 
   /* Horizontal layout for form fields */
   .form-row {
     margin: 0;
     display: flex;
-    flex-direction: row;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
     align-items: center;
     gap: 1rem;
   }
@@ -583,42 +599,7 @@
     gap: 0.35rem;
   }
 
-  label {
-    font-size: 0.8rem;
-    font-weight: 500;
-    color: #555;
-    margin: 0;
-    white-space: nowrap;
-  }
-
-  .form-control {
-    font-size: 0.875rem;
-    /* Regular size */
-    padding: 0.2rem 0.4rem;
-    height: auto;
-    min-width: 80px;
-  }
-}
-
-/* Show controls on hover - inherit col/offset from element (match width) */
-.element-editor__element:hover+.column-size-controls,
-.column-size-controls:hover,
-.column-size-controls:focus-within {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  /* Allow stacking on small columns */
-  align-items: center;
-  gap: 1rem;
-  padding: 0.25rem 0.75rem;
-  background: #f8f9fa;
-  border: 1px solid #0071c4;
-  border-radius: 4px;
-  margin-bottom: 0.35rem;
-  box-shadow: 0 1px 4px rgba(0, 113, 196, 0.12);
-  /* Inherit grid width from element - don't force 100% */
-
-  /* Override Bootstrap .col-sm-6 to force horizontal layout */
+  /* Override Bootstrap .col-sm-6 for horizontal dropdowns */
   .col-sm-6 {
     flex: 0 0 auto !important;
     max-width: none !important;
@@ -626,23 +607,20 @@
     padding: 0 !important;
   }
 
-  /* Force form-row to be horizontal but allow wrap */
-  .form-row {
-    flex-direction: row !important;
-    flex-wrap: wrap !important;
-    gap: 0.75rem;
-  }
-
-  /* Bigger fonts and wider dropdowns */
+  /* Larger fonts */
   label {
     font-size: 0.875rem !important;
     font-weight: 500;
+    color: #333;
+    margin: 0;
+    white-space: nowrap;
   }
 
   .form-control {
     font-size: 0.9rem !important;
-    min-width: 110px !important;
+    min-width: 100px !important;
     padding: 0.25rem 0.5rem !important;
+    height: auto;
   }
 }
 
