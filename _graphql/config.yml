@@ -1,5 +1,0 @@
-resolvers:
-  - 'WeDevelop\Resolvers\ElementalResolver'
-typeMapping:
-  DNADesign\Elemental\Models\BaseElement: Block
-  DNADesign\Elemental\Models\ElementalArea: ElementalArea

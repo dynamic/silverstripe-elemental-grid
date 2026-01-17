@@ -3,19 +3,19 @@
 namespace WeDevelop\ElementalGrid\Extensions;
 
 use SilverStripe\Core\ClassInfo;
+use SilverStripe\Core\Extension;
 use SilverStripe\Forms\CheckboxField;
 use SilverStripe\Forms\DropdownField;
 use SilverStripe\Forms\FieldGroup;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\Forms\HeaderField;
 use SilverStripe\Forms\TextField;
-use SilverStripe\ORM\DataExtension;
 use WeDevelop\ElementalGrid\CSSFramework\CSSFrameworkInterface;
 use WeDevelop\ElementalGrid\CSSFramework\TailwindCSSFramework;
 use WeDevelop\ElementalGrid\Models\ElementRow;
 use WeDevelop\ElementalGrid\ElementalConfig;
 
-class BaseElementExtension extends DataExtension
+class BaseElementExtension extends Extension
 {
     private static bool $inline_editable = false;
 

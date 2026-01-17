@@ -3,8 +3,9 @@ import React from 'react';
 import ColumnSize from 'components/ColumnSize';
 import AddBlockToBottomButton from 'components/AddBlockToBottomButton';
 import AddBlockToTopButton from 'components/AddBlockToTopButton';
-import Toolbar from 'components/ElementEditor/Toolbar';
-import ReactGridDropZone from 'components/ReactGridDropZone';
+// Removed react-dnd dependent components - @dnd-kit uses wrapper pattern instead
+// import Toolbar from 'components/ElementEditor/Toolbar';
+// import ReactGridDropZone from 'components/ReactGridDropZone';
 
 // Helper function to extract numeric ID from DOM element IDs  
 const extractNumericId = (domElementId) => {
@@ -24,11 +25,6 @@ const extractNumericId = (domElementId) => {
   return null;
 };
 
-// Helper function to detect element type (row vs regular element)
-const isRowElement = (element) => {
-  return element && element.classList && element.classList.contains('is-row');
-};
-
 // Removed createGridDropZone and createRowDropZone functions - now working with SilverStripe's existing system
 
 // Function to add grid drop zones around elements
@@ -38,18 +34,19 @@ const isRowElement = (element) => {
 // console.log('[GRID DEBUG] ========== GRID BUNDLE LOADING (REACT DND INTEGRATION) ==========');
 // console.log('[GRID DEBUG] Core components loaded for alongside implementation with React DnD zones');
 
-const OverruledToolbar = () => (props) => (
-  <div>
-    <Toolbar {...props} />
-  </div>
-);
+// Removed OverruledToolbar - not needed with @dnd-kit architecture
+// const OverruledToolbar = () => (props) => (
+//   <div>
+//     <Toolbar {...props} />
+//   </div>
+// );
 
 // Register core grid components (no complex overrides)
 Injector.component.registerMany({
   AddBlockToBottomButton,
   AddBlockToTopButton,
   ColumnSize,
-  ReactGridDropZone,
+  // ReactGridDropZone removed - @dnd-kit handles drop zones internally
 });
 
 // Cache for row elements to quickly restore during drag operations
@@ -143,47 +140,74 @@ const moveGridControlsIntoCards = () => {
       return;
     }
 
+    // Extract element ID from the input's ID attribute (e.g., "columnSize-56" -> "56")
+    const elementId = sizeSelect.id.replace('columnSize-', '');
+
     // Check if control is already inside an element card
     const existingElementCard = control.closest('.element-editor__element');
     if (existingElementCard) {
-      // Find the wrapper div (parent of element card) to apply grid classes
-      const wrapperDiv = existingElementCard.parentElement;
-      if (wrapperDiv && wrapperDiv.parentElement && wrapperDiv.parentElement.classList.contains('elemental-editor-list')) {
-        applyGridClassesToWrapper(wrapperDiv, sizeSelect.value, offsetSelect.value);
+      // In SS6, element cards are direct children of .elemental-editor-list (no wrapper divs)
+      // Apply grid classes directly to the element card
+      if (existingElementCard.parentElement && existingElementCard.parentElement.classList.contains('elemental-editor-list')) {
+        applyGridClassesToWrapper(existingElementCard, sizeSelect.value, offsetSelect.value);
       }
       return;
     }
 
     // The control is rendered as a sibling to the element card
-    // Look for the element card that's a sibling to this control
-    const parent = control.parentElement;
-    if (!parent) {
+    // Find the SPECIFIC element card that matches this control's element ID
+    const elementalList = document.querySelector('.elemental-editor-list');
+    if (!elementalList) {
       return;
     }
 
-    const elementCard = Array.from(parent.children).find(child =>
-      child.classList.contains('element-editor__element')
-    );
+    // Find all element cards and search for the one matching this ID
+    let targetElementCard = null;
+    const allElementCards = elementalList.querySelectorAll('.element-editor__element');
+    
+    for (const card of allElementCards) {
+      // Try to find element ID from various data attributes
+      let cardElementId = card.getAttribute('data-element-id') ||
+                          card.getAttribute('data-id') ||
+                          card.getAttribute('data-block-id') ||
+                          card.getAttribute('data-element') ||
+                          card.id;
+      
+      // If no direct attribute found, try to find from element-icon-XX inside the card
+      if (!cardElementId) {
+        const icon = card.querySelector('[id^="element-icon-"]');
+        if (icon) {
+          cardElementId = icon.id.replace('element-icon-', '');
+        }
+      }
+      
+      const numericCardId = extractNumericId(cardElementId);
+      
+      if (numericCardId && numericCardId.toString() === elementId) {
+        targetElementCard = card;
+        break;
+      }
+    }
 
-    if (!elementCard) {
+    if (!targetElementCard) {
+      console.warn(`[GRID DEBUG] Could not find element card for control with element ID: ${elementId}`);
       return;
     }
 
-    // Move the control into the card
-    elementCard.appendChild(control);
+    // Move the control into the CORRECT card
+    targetElementCard.appendChild(control);
 
-    // Apply grid classes to the wrapper div (parent of element card) instead of element card itself
-    const wrapperDiv = elementCard.parentElement;
-    if (wrapperDiv && wrapperDiv.parentElement && wrapperDiv.parentElement.classList.contains('elemental-editor-list')) {
-      applyGridClassesToWrapper(wrapperDiv, sizeSelect.value, offsetSelect.value);
+    // In SS6, apply grid classes directly to the element card (no wrapper divs)
+    if (targetElementCard.parentElement && targetElementCard.parentElement.classList.contains('elemental-editor-list')) {
+      applyGridClassesToWrapper(targetElementCard, sizeSelect.value, offsetSelect.value);
     }
 
     // Listen for changes to the dropdowns and update classes
     if (!sizeSelect.hasAttribute('data-grid-listener')) {
       sizeSelect.setAttribute('data-grid-listener', 'true');
       sizeSelect.addEventListener('change', (e) => {
-        if (wrapperDiv && wrapperDiv.parentElement && wrapperDiv.parentElement.classList.contains('elemental-editor-list')) {
-          applyGridClassesToWrapper(wrapperDiv, e.target.value, offsetSelect.value);
+        if (targetElementCard.parentElement && targetElementCard.parentElement.classList.contains('elemental-editor-list')) {
+          applyGridClassesToWrapper(targetElementCard, e.target.value, offsetSelect.value);
         }
       });
     }
@@ -191,8 +215,8 @@ const moveGridControlsIntoCards = () => {
     if (!offsetSelect.hasAttribute('data-grid-listener')) {
       offsetSelect.setAttribute('data-grid-listener', 'true');
       offsetSelect.addEventListener('change', (e) => {
-        if (wrapperDiv && wrapperDiv.parentElement && wrapperDiv.parentElement.classList.contains('elemental-editor-list')) {
-          applyGridClassesToWrapper(wrapperDiv, sizeSelect.value, e.target.value);
+        if (targetElementCard.parentElement && targetElementCard.parentElement.classList.contains('elemental-editor-list')) {
+          applyGridClassesToWrapper(targetElementCard, sizeSelect.value, e.target.value);
         }
       });
     }
@@ -268,7 +292,15 @@ const throttledRestoreRowStyling = throttle(restoreRowElementStyling, 100);
 const throttledMoveGridControls = throttle(moveGridControlsIntoCards, 200);
 
 // Create a higher-order component that enhances the existing Element with grid functionality
+// CRITICAL: Prevent duplicate component creation by caching enhanced components
+const enhancedComponentCache = new WeakMap();
+
 const withGridFunctionality = (OriginalElement) => {
+  // Check if we've already enhanced this component
+  if (enhancedComponentCache.has(OriginalElement)) {
+    return enhancedComponentCache.get(OriginalElement);
+  }
+
   const GridEnhancedElement = (props) => {
     // Get the ColumnSize component from Injector
     const ColumnSizeComponent = Injector.component.get('ColumnSize');
@@ -276,26 +308,18 @@ const withGridFunctionality = (OriginalElement) => {
     // Check if this element needs grid functionality
     const { element } = props;
     const hasGridSchema = element && element.blockSchema && element.blockSchema.grid;
-    const isNotRow = hasGridSchema && !element.blockSchema.grid.isRow;
     const isRow = hasGridSchema && element.blockSchema.grid.isRow;
 
-    // NEW: Determine if this is a row element (for declarative styling)
-    const shouldBeRowElement = isRow || (!hasGridSchema &&
-      (element.blockSchema.typeName === 'ElementRow' ||
-       (element.title && element.title.includes('Row')) ||
-       (element.blockSchema.title && element.blockSchema.title.includes('Row'))));
+    // Determine if this is a row element (container type that shouldn't have grid controls)
+    // Check both explicit grid schema AND fallback to element type name/title
+    const shouldBeRowElement = isRow ||
+      element.blockSchema.typeName === 'ElementRow' ||
+      element.blockSchema.typeName === 'WeDevelop\\ElementalGrid\\Models\\ElementRow' ||
+      (element.title && element.title.includes('Row')) ||
+      (element.blockSchema.title && element.blockSchema.title.includes('Row'));
 
-    // Hook into drag lifecycle to re-apply grid classes
-    const originalOnDragEnd = props.onDragEnd;
-    const enhancedOnDragEnd = React.useCallback((itemID, dropAfterID) => {
-      // Call the original onDragEnd first with the correct parameters
-      if (originalOnDragEnd) {
-        originalOnDragEnd(itemID, dropAfterID);
-      }
-
-      // Don't immediately re-apply grid classes - let the global drag end handler do it
-      // This prevents double application and timing issues
-    }, [originalOnDragEnd]);
+    // Regular elements SHOULD have grid controls unless they're rows
+    const shouldHaveGridControls = !shouldBeRowElement && hasGridSchema;
 
     // NEW: Enhanced drag start handler to preserve row state
     const originalOnDragStart = props.onDragStart;
@@ -330,6 +354,22 @@ const withGridFunctionality = (OriginalElement) => {
       }
     }, [originalOnDragOver, shouldBeRowElement]);
 
+    // NEW: Enhanced drag end handler to re-apply grid functionality after drag
+    const originalOnDragEnd = props.onDragEnd;
+    const enhancedOnDragEnd = React.useCallback((e) => {
+      if (originalOnDragEnd) {
+        originalOnDragEnd(e);
+      }
+
+      // Re-apply grid controls after drag completes
+      setTimeout(() => {
+        moveGridControlsIntoCards();
+        if (shouldBeRowElement) {
+          restoreRowElementStyling();
+        }
+      }, 100);
+    }, [originalOnDragEnd, shouldBeRowElement]);
+
     // NEW: Create enhanced props with drag handlers and declarative classes
     const enhancedProps = {
       ...props,
@@ -349,7 +389,7 @@ const withGridFunctionality = (OriginalElement) => {
     // Post-render layout effect to ensure grid classes are applied before browser paint
     React.useLayoutEffect(() => {
       // Apply grid functionality for regular elements
-      if (isNotRow && ColumnSizeComponent) {
+      if (shouldHaveGridControls && ColumnSizeComponent) {
         // Apply immediately before browser paint to prevent visual shifts
         moveGridControlsIntoCards();
       }
@@ -382,15 +422,15 @@ const withGridFunctionality = (OriginalElement) => {
           }
         }, 0);
       }
-    }, [element.id, isNotRow, shouldBeRowElement, ColumnSizeComponent]);
+    }, [element.id, shouldHaveGridControls, shouldBeRowElement, ColumnSizeComponent]);
 
-    // If this is a row element, return with row styling only
+    // If this is a row element (container), don't add grid controls
     if (shouldBeRowElement) {
       return originalElement;
     }
 
-    // If this element doesn't need grid functionality, return as-is
-    if (!isNotRow || !ColumnSizeComponent) {
+    // If this element doesn't have grid schema or ColumnSize component not available, return as-is
+    if (!shouldHaveGridControls || !ColumnSizeComponent) {
       return originalElement;
     }
 
@@ -398,35 +438,105 @@ const withGridFunctionality = (OriginalElement) => {
     const gridData = element.blockSchema.grid.column || {};
 
     const handleChangeSize = () => {
-      // The GraphQL mutation will handle the update
+      // The REST API mutation will handle the update
     };
 
     const handleChangeOffset = () => {
-      // The GraphQL mutation will handle the update
+      // The REST API mutation will handle the update
     };
 
-    const gridComponent = React.createElement(ColumnSizeComponent, {
-      elementId: element.id,
-      size: gridData.size || 12,
-      defaultViewport: gridData.defaultViewport || 'LG',
-      gridColumns: element.blockSchema.grid.gridColumns || 12,
-      offset: gridData.offset || 0,
-      onChangeSize: handleChangeSize,
-      onChangeOffset: handleChangeOffset,
-      id: `grid-${element.id}`,
-    });
+    // REMOVED: Debug console.log that was creating duplicate components
+    // Only create ColumnSize component once per render
+    const gridComponent = React.useMemo(() => {
+      return React.createElement(ColumnSizeComponent, {
+        elementId: element.id,
+        areaId: props.areaId, // Pass areaId from props
+        size: gridData.size || 12,
+        defaultViewport: gridData.defaultViewport || 'LG',
+        gridColumns: element.blockSchema.grid.gridColumns || 12,
+        offset: gridData.offset || 0,
+        onChangeSize: handleChangeSize,
+        onChangeOffset: handleChangeOffset,
+        id: `grid-${element.id}`,
+        autoSaveEnabled: true, // Enable auto-save to persist changes immediately via REST API
+      });
+    }, [element.id, props.areaId, gridData.size, gridData.offset, ColumnSizeComponent]);
 
     // Return enhanced element with grid controls
     return React.createElement(React.Fragment, null, originalElement, gridComponent);
   };
 
   GridEnhancedElement.displayName = `GridEnhanced(${OriginalElement.displayName || OriginalElement.name || 'Element'})`;
+  
+  // Cache the enhanced component to prevent duplicate HOC applications
+  enhancedComponentCache.set(OriginalElement, GridEnhancedElement);
+  
   return GridEnhancedElement;
 };
 
 // Global function to force re-application of grid classes (can be called from anywhere)
 window.reapplyGridClasses = () => {
   moveGridControlsIntoCards();
+};
+
+// Intercept form submissions to ensure grid values are included
+const interceptFormSubmissions = () => {
+  // Listen for form submissions in the CMS
+  document.addEventListener('submit', (e) => {
+    const form = e.target;
+    
+    // Check if this is an element form that might have grid controls
+    if (!form.closest('.cms-content') && !form.querySelector('[name^="Elements"]')) {
+      return; // Not a CMS form, ignore
+    }
+    
+    // Find all grid control dropdowns in the page
+    const sizeDropdowns = document.querySelectorAll('[id^="columnSize-"]');
+    const offsetDropdowns = document.querySelectorAll('[id^="columnOffset-"]');
+    
+    // Add hidden inputs for each grid control to ensure values are submitted
+    sizeDropdowns.forEach((dropdown) => {
+      const fieldName = dropdown.getAttribute('name');
+      const fieldValue = dropdown.value;
+      
+      if (fieldName && fieldValue) {
+        // Check if field already exists in form
+        const existingField = form.querySelector(`input[name="${fieldName}"]`);
+        if (!existingField) {
+          // Create hidden input
+          const hiddenInput = document.createElement('input');
+          hiddenInput.type = 'hidden';
+          hiddenInput.name = fieldName;
+          hiddenInput.value = fieldValue;
+          hiddenInput.setAttribute('data-grid-injected', 'true');
+          form.appendChild(hiddenInput);
+          console.log('[GRID] Injected size field:', fieldName, '=', fieldValue);
+        }
+      }
+    });
+    
+    offsetDropdowns.forEach((dropdown) => {
+      const fieldName = dropdown.getAttribute('name');
+      const fieldValue = dropdown.value;
+      
+      if (fieldName && fieldValue) {
+        // Check if field already exists in form
+        const existingField = form.querySelector(`input[name="${fieldName}"]`);
+        if (!existingField) {
+          // Create hidden input
+          const hiddenInput = document.createElement('input');
+          hiddenInput.type = 'hidden';
+          hiddenInput.name = fieldName;
+          hiddenInput.value = fieldValue;
+          hiddenInput.setAttribute('data-grid-injected', 'true');
+          form.appendChild(hiddenInput);
+          console.log('[GRID] Injected offset field:', fieldName, '=', fieldValue);
+        }
+      }
+    });
+  }, true); // Use capture phase to ensure we intercept before React
+  
+  console.log('[GRID DEBUG] Form submission interceptor installed');
 };
 
 // Add event listeners for drag operations
@@ -588,12 +698,6 @@ const addDragEventListeners = () => {
 // Hover bar enhancements removed - we now use our own drop zones for visual feedback
 
 // Removed custom drop zone injection - now working with SilverStripe's existing system
-
-
-// insertAfter polyfill
-const insertAfter = (newNode, referenceNode) => {
-  referenceNode.parentNode.insertBefore(newNode, referenceNode.nextSibling);
-};
 
 // Trigger existing SilverStripe hover bar functionality
 const triggerHoverBarClick = (hoverBar) => {
@@ -788,19 +892,6 @@ const getAreaIdFromContext = (targetElement) => {
   return 1;
 };
 
-// Helper function to get allowed element types
-const getAllowedElementTypes = () => {
-  // Try to get element types from the window context if available
-  if (window.ss && window.ss.elementTypes) {
-    return window.ss.elementTypes;
-  }
-
-  // Fallback: return empty array, ReactGridDropZone will handle this
-  return [];
-};
-
-
-
 // Helper function to trigger the appropriate hover bar based on position
 const triggerHoverBarForPosition = (targetElement, position) => {
   const elementWrapper = targetElement.parentElement;
@@ -824,130 +915,16 @@ const triggerHoverBarForPosition = (targetElement, position) => {
   }
 };
 
-// Setup native drag and drop events to integrate with React DnD
-const setupNativeDragDropEvents = (zone, targetElement, position) => {
-  // Make the zone a proper drop target
-  zone.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    zone.classList.add('grid-drop-zone--drag-over');
-  });
-
-  zone.addEventListener('dragenter', (e) => {
-    e.preventDefault();
-    zone.classList.add('grid-drop-zone--drag-over');
-  });
-
-  zone.addEventListener('dragleave', (e) => {
-    if (!zone.contains(e.relatedTarget)) {
-      zone.classList.remove('grid-drop-zone--drag-over');
-    }
-  });
-
-  zone.addEventListener('drop', (e) => {
-    e.preventDefault();
-    zone.classList.remove('grid-drop-zone--drag-over');
-
-    // Debug: Log all available drag data types
-    console.log('[GRID DEBUG] Drop event - available data types:', e.dataTransfer.types);
-
-    // The issue is that SilverStripe stores data as application/json but it returns '[object Object]'
-    // We need to get the actual drag data from the drag event or monitor
-    let draggedElementId = null;
-
-    // Try to get drag data from different sources
-    const rawJsonData = e.dataTransfer.getData('application/json');
-    console.log('[GRID DEBUG] Raw JSON data:', rawJsonData);
-
-    // Since we can't get the actual data from dataTransfer, we need to intercept it from the drag start
-    // Let's try to get it from the dragged element's attributes or global state
-    const draggedElement = document.querySelector('.element-editor__element--dragging');
-    if (draggedElement) {
-      console.log('[GRID DEBUG] Currently dragging element attributes:', {
-        tagName: draggedElement.tagName,
-        className: draggedElement.className,
-        id: draggedElement.id,
-        attributes: Array.from(draggedElement.attributes).map(attr => `${attr.name}="${attr.value}"`)
-      });
-
-      const rawDraggedElementId = draggedElement.getAttribute('data-element-id') ||
-                        draggedElement.getAttribute('data-id') ||
-                        draggedElement.getAttribute('data-block-id') ||
-                        draggedElement.getAttribute('data-element') ||
-                        draggedElement.id;
-      draggedElementId = extractNumericId(rawDraggedElementId);
-      console.log('[GRID DEBUG] Found dragged element via CSS class:', rawDraggedElementId, '-> converted to numeric:', draggedElementId);
-
-      // Try to find ID in child elements if main element doesn't have it
-      if (!draggedElementId) {
-        const childWithId = draggedElement.querySelector('[data-element-id], [data-id], [data-block-id], [id]');
-        if (childWithId) {
-          const rawChildElementId = childWithId.getAttribute('data-element-id') ||
-                            childWithId.getAttribute('data-id') ||
-                            childWithId.getAttribute('data-block-id') ||
-                            childWithId.id;
-          draggedElementId = extractNumericId(rawChildElementId);
-          console.log('[GRID DEBUG] Found element ID in dragging child element:', rawChildElementId, '-> converted to numeric:', draggedElementId);
-        }
-      }
-    }
-
-    // If still no ID, try to find it from the drag image or any recently active element
-    if (!draggedElementId) {
-      // Look for any element that might have been recently dragged
-      const allElements = document.querySelectorAll('.element-editor__element[data-element-id]');
-      for (const element of allElements) {
-        if (element.style.opacity === '0.5' || element.classList.contains('dragging')) {
-          const rawElementId = element.getAttribute('data-element-id');
-          draggedElementId = extractNumericId(rawElementId);
-          console.log('[GRID DEBUG] Found dragged element via opacity/class:', rawElementId, '-> converted to numeric:', draggedElementId);
-          break;
-        }
-      }
-    }
-
-    // Alternative approach: Check if there's a global drag state we can access
-    if (!draggedElementId && window.currentDraggedElement) {
-      draggedElementId = window.currentDraggedElement;
-      // Ensure the ID is numeric (fallback in case it wasn't converted earlier)
-      if (draggedElementId && !/^\d+$/.test(draggedElementId)) {
-        draggedElementId = extractNumericId(draggedElementId);
-        console.log('[GRID DEBUG] Found dragged element from global state and converted to numeric:', draggedElementId);
-      } else {
-        console.log('[GRID DEBUG] Found dragged element from global state (already numeric):', draggedElementId);
-      }
-    }
-
-    if (!draggedElementId) {
-      console.warn('[GRID DEBUG] Could not determine dragged element ID. Available data:', {
-        hasDataTransfer: !!e.dataTransfer,
-        types: e.dataTransfer.types,
-        effectAllowed: e.dataTransfer.effectAllowed,
-        dropEffect: e.dataTransfer.dropEffect,
-        rawJsonData
-      });
-      // Don't return - let's try the fallback approach
-    } else {
-      console.log('[GRID DEBUG] Successfully found dragged element ID:', draggedElementId);
-    }
-
-    // Calculate insertion position
-    const insertionData = calculateGridInsertionPosition(position, targetElement);
-    console.log('[GRID DEBUG] Native drop on', position, 'zone:', insertionData);
-
-    // If we have a valid element ID, trigger the drag end handler
-    if (draggedElementId) {
-      console.log('[GRID DEBUG] Triggering drag end with element ID:', draggedElementId);
-      triggerSilverStripeDragEnd(draggedElementId, insertionData.insertAfterElementId);
-    } else {
-      // Fallback: Try to trigger hover bar functionality as a last resort
-      console.log('[GRID DEBUG] No element ID - falling back to hover bar trigger');
-      triggerHoverBarForPosition(targetElement, position);
-    }
-  });
-};
-
+// Prevent multiple initialization - use window object for cross-bundle scope
 window.document.addEventListener('DOMContentLoaded', () => {
+  // CRITICAL: Guard against multiple initialization (memory leak prevention)
+  // Use window object to ensure this persists across bundle reloads
+  if (window.__GRID_SYSTEM_INITIALIZED__) {
+    console.warn('[GRID] Already initialized (cross-bundle check), skipping duplicate setup');
+    return;
+  }
+  window.__GRID_SYSTEM_INITIALIZED__ = true;
+
   console.log('[GRID DEBUG] DOMContentLoaded - Starting alongside grid enhancements...');
 
   // Keep the Element enhancement (this works well)
@@ -957,15 +934,18 @@ window.document.addEventListener('DOMContentLoaded', () => {
     console.log('[GRID DEBUG] Element enhanced with grid functionality');
   });
 
-  // Keep the toolbar enhancement (this works well)
-  console.log('[GRID DEBUG] Applying ElementToolbar enhancement...');
-  Injector.transform('elemental-grid-toolbar', (updater) => {
-    updater.component('ElementToolbar', OverruledToolbar);
-    console.log('[GRID DEBUG] ElementToolbar enhanced');
-  });
+  // Removed toolbar enhancement - not needed with @dnd-kit architecture
+  // console.log('[GRID DEBUG] Applying ElementToolbar enhancement...');
+  // Injector.transform('elemental-grid-toolbar', (updater) => {
+  //   updater.component('ElementToolbar', OverruledToolbar);
+  //   console.log('[GRID DEBUG] ElementToolbar enhanced');
+  // });
 
   // Set up drag event listeners (keep existing functionality)
   addDragEventListeners();
+  
+  // Set up form submission interceptor to ensure grid values are saved
+  interceptFormSubmissions();
 
   // Set up DOM manipulation to move controls inside cards
   setTimeout(() => {
@@ -973,8 +953,16 @@ window.document.addEventListener('DOMContentLoaded', () => {
 
     console.log('[GRID DEBUG] Grid enhancements applied alongside existing system');
 
+    // CRITICAL: Prevent observer from running during our own DOM updates to avoid infinite loops
+    let isApplyingGridChanges = false;
+
     // Enhanced observer to detect React re-renders and maintain grid enhancements
     const observer = new MutationObserver((mutations) => {
+      // CRITICAL: Skip if we're currently applying grid changes to prevent infinite recursion
+      if (isApplyingGridChanges) {
+        return;
+      }
+
       let shouldReapply = false;
       let shouldRestoreRowStyling = false;
       let shouldReenhanceSystem = false;
@@ -1058,7 +1046,13 @@ window.document.addEventListener('DOMContentLoaded', () => {
       // Prioritize row styling restoration during drag operations
       if (shouldRestoreRowStyling && window.isDraggingElement) {
         queueMicrotask(() => {
-          restoreRowElementStyling();
+          isApplyingGridChanges = true;
+          try {
+            restoreRowElementStyling();
+          } finally {
+            // Use setTimeout to reset flag after DOM updates settle
+            setTimeout(() => { isApplyingGridChanges = false; }, 0);
+          }
         });
       }
 
@@ -1067,12 +1061,22 @@ window.document.addEventListener('DOMContentLoaded', () => {
         if (window.isDraggingElement) {
           // Faster response during drag
           queueMicrotask(() => {
-            throttledMoveGridControls();
+            isApplyingGridChanges = true;
+            try {
+              throttledMoveGridControls();
+            } finally {
+              setTimeout(() => { isApplyingGridChanges = false; }, 0);
+            }
           });
         } else {
           // Normal response outside drag
           queueMicrotask(() => {
-            moveGridControlsIntoCards();
+            isApplyingGridChanges = true;
+            try {
+              moveGridControlsIntoCards();
+            } finally {
+              setTimeout(() => { isApplyingGridChanges = false; }, 0);
+            }
           });
         }
       }
@@ -1081,16 +1085,43 @@ window.document.addEventListener('DOMContentLoaded', () => {
       if (shouldReenhanceSystem) {
         setTimeout(() => {
           console.log('[GRID DEBUG] Re-enhancing system due to new content...');
-          moveGridControlsIntoCards();
+          isApplyingGridChanges = true;
+          try {
+            moveGridControlsIntoCards();
+          } finally {
+            setTimeout(() => { isApplyingGridChanges = false; }, 50);
+          }
         }, 100);
       }
     });
 
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ['class']
-    });
+    // CRITICAL: Only observe the main content area, not entire document.body
+    // This prevents observer from firing during save operations on other parts of the page
+    const observeElementalArea = () => {
+      const elementalArea = document.querySelector('.elemental-editor-list') || 
+                           document.querySelector('[data-schema-component="ElementalArea"]') ||
+                           document.querySelector('.cms-content');
+      
+      if (elementalArea) {
+        console.log('[GRID DEBUG] Observer attached to:', elementalArea.className);
+        observer.observe(elementalArea, {
+          childList: true,
+          subtree: true,
+          attributes: true,
+          attributeFilter: ['class']
+        });
+      } else {
+        // Fallback to body if elemental area not found, but log warning
+        console.warn('[GRID DEBUG] Elemental area not found, observing body (may impact performance)');
+        observer.observe(document.body, {
+          childList: true,
+          subtree: true,
+          attributes: true,
+          attributeFilter: ['class']
+        });
+      }
+    };
+    
+    observeElementalArea();
   }, 1000);
 });
