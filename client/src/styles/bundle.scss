@@ -5,7 +5,7 @@
   flex-wrap: wrap !important;
   margin-right: -15px !important;
   margin-left: -15px !important;
-  
+
   &.row {
     /* Ensure Bootstrap row styles apply */
     box-sizing: border-box;
@@ -13,7 +13,7 @@
 }
 
 /* Element cards are direct children in SS6 - apply padding and grid classes to them */
-.elemental-editor-list > .element-editor__element {
+.elemental-editor-list>.element-editor__element {
   padding-right: 15px !important;
   padding-left: 15px !important;
   box-sizing: border-box;
@@ -21,32 +21,111 @@
   width: 100%;
   min-height: 1px;
   transition: all 200ms ease-in-out;
-  
-  &.col-lg-1 { flex: 0 0 8.333333%; max-width: 8.333333%; }
-  &.col-lg-2 { flex: 0 0 16.666667%; max-width: 16.666667%; }
-  &.col-lg-3 { flex: 0 0 25%; max-width: 25%; }
-  &.col-lg-4 { flex: 0 0 33.333333%; max-width: 33.333333%; }
-  &.col-lg-5 { flex: 0 0 41.666667%; max-width: 41.666667%; }
-  &.col-lg-6 { flex: 0 0 50%; max-width: 50%; }
-  &.col-lg-7 { flex: 0 0 58.333333%; max-width: 58.333333%; }
-  &.col-lg-8 { flex: 0 0 66.666667%; max-width: 66.666667%; }
-  &.col-lg-9 { flex: 0 0 75%; max-width: 75%; }
-  &.col-lg-10 { flex: 0 0 83.333333%; max-width: 83.333333%; }
-  &.col-lg-11 { flex: 0 0 91.666667%; max-width: 91.666667%; }
-  &.col-lg-12 { flex: 0 0 100%; max-width: 100%; }
+
+  &.col-lg-1 {
+    flex: 0 0 8.333333%;
+    max-width: 8.333333%;
+  }
+
+  &.col-lg-2 {
+    flex: 0 0 16.666667%;
+    max-width: 16.666667%;
+  }
+
+  &.col-lg-3 {
+    flex: 0 0 25%;
+    max-width: 25%;
+  }
+
+  &.col-lg-4 {
+    flex: 0 0 33.333333%;
+    max-width: 33.333333%;
+  }
+
+  &.col-lg-5 {
+    flex: 0 0 41.666667%;
+    max-width: 41.666667%;
+  }
+
+  &.col-lg-6 {
+    flex: 0 0 50%;
+    max-width: 50%;
+  }
+
+  &.col-lg-7 {
+    flex: 0 0 58.333333%;
+    max-width: 58.333333%;
+  }
+
+  &.col-lg-8 {
+    flex: 0 0 66.666667%;
+    max-width: 66.666667%;
+  }
+
+  &.col-lg-9 {
+    flex: 0 0 75%;
+    max-width: 75%;
+  }
+
+  &.col-lg-10 {
+    flex: 0 0 83.333333%;
+    max-width: 83.333333%;
+  }
+
+  &.col-lg-11 {
+    flex: 0 0 91.666667%;
+    max-width: 91.666667%;
+  }
+
+  &.col-lg-12 {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
 
   /* Bootstrap offset classes - define left margins */
-  &.offset-lg-1 { margin-left: 8.333333%; }
-  &.offset-lg-2 { margin-left: 16.666667%; }
-  &.offset-lg-3 { margin-left: 25%; }
-  &.offset-lg-4 { margin-left: 33.333333%; }
-  &.offset-lg-5 { margin-left: 41.666667%; }
-  &.offset-lg-6 { margin-left: 50%; }
-  &.offset-lg-7 { margin-left: 58.333333%; }
-  &.offset-lg-8 { margin-left: 66.666667%; }
-  &.offset-lg-9 { margin-left: 75%; }
-  &.offset-lg-10 { margin-left: 83.333333%; }
-  &.offset-lg-11 { margin-left: 91.666667%; }
+  &.offset-lg-1 {
+    margin-left: 8.333333%;
+  }
+
+  &.offset-lg-2 {
+    margin-left: 16.666667%;
+  }
+
+  &.offset-lg-3 {
+    margin-left: 25%;
+  }
+
+  &.offset-lg-4 {
+    margin-left: 33.333333%;
+  }
+
+  &.offset-lg-5 {
+    margin-left: 41.666667%;
+  }
+
+  &.offset-lg-6 {
+    margin-left: 50%;
+  }
+
+  &.offset-lg-7 {
+    margin-left: 58.333333%;
+  }
+
+  &.offset-lg-8 {
+    margin-left: 66.666667%;
+  }
+
+  &.offset-lg-9 {
+    margin-left: 75%;
+  }
+
+  &.offset-lg-10 {
+    margin-left: 83.333333%;
+  }
+
+  &.offset-lg-11 {
+    margin-left: 91.666667%;
+  }
 }
 
 .element-editor__element {
@@ -55,7 +134,8 @@
   outline: 1px solid #dbe0e9;
   transition: all 200ms ease-in-out;
   position: relative;
-  z-index: 15; /* Ensure elements are above drop zones (z-index: 10) for proper drag functionality */
+  z-index: 15;
+  /* Ensure elements are above drop zones (z-index: 10) for proper drag functionality */
 
   &--expanded {
     flex: 0 0 100%;
@@ -67,7 +147,7 @@
     opacity: 0;
     overflow: hidden;
     transform: scale(0.8);
-    
+
     // Hide drop zones for the element being dragged
     .grid-drop-zone {
       display: none !important;
@@ -85,39 +165,54 @@
 
 }
 
-/* HOVER BAR STYLING - Completely hide visual feedback while preserving functionality */
+/* HOVER BAR STYLING - Collapse to allow side-by-side element layout */
 .element-editor__hover-bar {
-  /* Keep basic structure for SilverStripe functionality */
-  height: 0;
-  position: relative;
+  /* CRITICAL: Collapse to not take any flex space */
+  width: 0 !important;
+  height: 0 !important;
+  flex: 0 0 0 !important;
+  flex-basis: 0 !important;
+  flex-grow: 0 !important;
+  flex-shrink: 0 !important;
+  overflow: hidden !important;
+  position: absolute !important;
+  pointer-events: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
   /* No visual enhancements - we use our own drop zones for feedback */
-  
+
   /* Completely hide any hover bar visual feedback */
+  /* CRITICAL: Make hover bars not break flex layout for side-by-side columns */
   .element-editor__hover-bar-area {
+    position: absolute !important;
+    width: 0 !important;
+    height: 0 !important;
+    overflow: hidden !important;
     background: transparent !important;
     border: none !important;
     outline: none !important;
     box-shadow: none !important;
-    
+    pointer-events: none !important;
+
     &:hover {
       background: transparent !important;
       border: none !important;
       outline: none !important;
       box-shadow: none !important;
     }
-    
+
     &::before,
     &::after {
       display: none !important;
     }
   }
-  
-  /* NEW: Hide the blue line and plus icon completely */
+
+  /* Hide the blue line and plus icon completely */
   .element-editor__hover-bar-line {
     display: none !important;
     opacity: 0 !important;
     visibility: hidden !important;
-    
+
     &::before {
       display: none !important;
       opacity: 0 !important;
@@ -125,8 +220,8 @@
       visibility: hidden !important;
     }
   }
-  
-  /* NEW: Hide on all hover/focus states */
+
+  /* Hide on all hover/focus states */
   .element-editor__hover-bar-area:hover,
   .element-editor__hover-bar-area:focus,
   .element-editor__hover-bar-area--focus {
@@ -134,7 +229,7 @@
       display: none !important;
       opacity: 0 !important;
       visibility: hidden !important;
-      
+
       &::before {
         display: none !important;
         opacity: 0 !important;
@@ -156,16 +251,19 @@
   border-radius: 2px;
   box-shadow: 0 0 8px rgba(0, 113, 196, 0.4);
   margin: 8px 0 !important;
-  
+
   /* Subtle animation to draw attention */
   animation: drag-indicator-pulse 2s ease-in-out infinite;
 }
 
 @keyframes drag-indicator-pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 0.8;
     transform: scaleY(1);
   }
+
   50% {
     opacity: 1;
     transform: scaleY(1.2);
@@ -255,8 +353,10 @@
   transition: all 200ms ease-in-out;
   border-radius: 4px;
   z-index: 10;
-  opacity: 0; /* Hidden by default, shown only during drag operations */
-  pointer-events: none; /* Don't capture events by default to avoid interfering with drag handles */
+  opacity: 0;
+  /* Hidden by default, shown only during drag operations */
+  pointer-events: none;
+  /* Don't capture events by default to avoid interfering with drag handles */
   background-color: rgba(0, 113, 196, 0.08);
 
   &--left {
@@ -270,7 +370,8 @@
   /* Hidden by default, shown only during drag operations */
   .elemental-editor-list & {
     opacity: 0;
-    pointer-events: none; /* Don't interfere with normal interactions */
+    pointer-events: none;
+    /* Don't interfere with normal interactions */
   }
 
   /* Show zones only during drag operations */
@@ -278,7 +379,8 @@
     opacity: 0.8;
     border-color: rgba(0, 113, 196, 0.6);
     background-color: rgba(0, 113, 196, 0.12);
-    pointer-events: auto; /* Enable interaction only during drag */
+    pointer-events: auto;
+    /* Enable interaction only during drag */
   }
 
   &--hover,
@@ -287,7 +389,7 @@
     border-color: rgba(0, 113, 196, 0.8);
     background-color: rgba(0, 113, 196, 0.15);
     width: 20px;
-    
+
     .grid-drop-zone__label {
       opacity: 1;
     }
@@ -420,16 +522,16 @@
 .elemental-editor-list {
   /* Add padding to accommodate side drop zones */
   padding: 0 60px;
-  
+
   /* Element holders need relative positioning for absolute drop zones */
   .element-editor__element-holder {
     position: relative;
     margin: 8px 0;
-    
+
     /* Ensure minimum height for drop zone visibility */
     min-height: 4rem;
   }
-  
+
   /* Enhanced state during drag operations */
   &.dragging-active {
     .grid-drop-zone {
@@ -437,12 +539,12 @@
       pointer-events: auto;
       border-color: rgba(0, 113, 196, 0.8);
     }
-    
+
     .row-drop-zone {
       opacity: 1;
     }
   }
-  
+
   /* Removed hover visibility - zones only show during drag operations */
 }
 
@@ -451,6 +553,74 @@
   display: flex;
 }
 
-.optionset-image-field:not(.form-group) > .radio {
+.optionset-image-field:not(.form-group)>.radio {
   margin-right: 10px;
 }
+
+/* COLUMN SIZE CONTROLS - Popover style positioning */
+/* Hidden by default, positioned absolutely via JS on hover */
+.column-size-controls {
+  display: none !important;
+  background: #fff;
+  border: 1px solid #0071c4;
+  border-radius: 4px;
+  padding: 0.5rem 0.75rem;
+  box-shadow: 0 4px 12px rgba(0, 113, 196, 0.15);
+  box-sizing: border-box;
+
+  hr {
+    display: none;
+  }
+
+  /* Shown via JS .is-visible class */
+  &.is-visible {
+    display: flex !important;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  /* Horizontal layout for form fields */
+  .form-row {
+    margin: 0;
+    display: flex;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .form-group {
+    margin: 0;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  /* Override Bootstrap .col-sm-6 for horizontal dropdowns */
+  .col-sm-6 {
+    flex: 0 0 auto !important;
+    max-width: none !important;
+    width: auto !important;
+    padding: 0 !important;
+  }
+
+  /* Larger fonts */
+  label {
+    font-size: 0.875rem !important;
+    font-weight: 500;
+    color: #333;
+    margin: 0;
+    white-space: nowrap;
+  }
+
+  .form-control {
+    font-size: 0.9rem !important;
+    min-width: 100px !important;
+    padding: 0.25rem 0.5rem !important;
+    height: auto;
+  }
+}
+
