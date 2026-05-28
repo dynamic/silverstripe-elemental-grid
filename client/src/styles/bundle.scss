@@ -179,6 +179,12 @@
   margin: 0 !important;
   padding: 0 !important;
 
+  &:focus-within,
+  &:has(.popover),
+  &:has(.element-editor-add-element) {
+    z-index: 1050 !important;
+  }
+
   .element-editor__hover-bar-area {
     position: absolute !important;
     background: transparent !important;

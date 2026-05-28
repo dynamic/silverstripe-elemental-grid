@@ -152,6 +152,9 @@
   /* Horizontal Hover Bar Styles */
   /* Vertical Hover Bar Styles (Columns) */
 }
+.element-editor__hover-bar:focus-within, .element-editor__hover-bar:has(.popover), .element-editor__hover-bar:has(.element-editor-add-element) {
+  z-index: 1050 !important;
+}
 .element-editor__hover-bar .element-editor__hover-bar-area {
   position: absolute !important;
   background: transparent !important;
