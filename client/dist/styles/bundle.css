@@ -148,8 +148,7 @@
   pointer-events: none !important;
   margin: 0 !important;
   padding: 0 !important;
-  /* Ensure the add block popover remains interactive despite parent having pointer-events: none */
-  /* Prevent popover from being squeezed inside narrow vertical/horizontal hover bars */
+  /* Ensure the add block popover remains interactive and has proper width inside vertical/horizontal hover bars */
   /* Horizontal Hover Bar Styles */
   /* Vertical Hover Bar Styles (Columns) */
 }
@@ -174,8 +173,6 @@
 .element-editor__hover-bar .element-editor-add-element,
 .element-editor__hover-bar .popover {
   pointer-events: auto !important;
-}
-.element-editor__hover-bar .element-editor-add-element {
   width: 320px !important;
   max-width: none !important;
 }
