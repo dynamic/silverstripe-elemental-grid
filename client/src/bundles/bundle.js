@@ -349,7 +349,7 @@ const withGridFunctionality = (OriginalElement) => {
       // Remove existing grid classes from element
       elementCard.className = elementCard.className.replace(/\bcol-lg-\d+\b/g, '');
       elementCard.className = elementCard.className.replace(/\boffset-lg-\d+\b/g, '');
-      elementCard.classList.remove('is-row');
+      elementCard.classList.remove('is-row', 'is-fluid-row', 'is-contained-row');
 
       // Also find and update the controls sibling (next element after the card)
       const controlsSibling = elementCard.nextElementSibling;
@@ -360,7 +360,13 @@ const withGridFunctionality = (OriginalElement) => {
 
       // Add grid classes
       if (shouldBeRowElement) {
+        const isFluid = element && element.blockSchema && element.blockSchema.grid && element.blockSchema.grid.isFluid;
         elementCard.classList.add('is-row', 'col-lg-12');
+        if (isFluid) {
+          elementCard.classList.add('is-fluid-row');
+        } else {
+          elementCard.classList.add('is-contained-row');
+        }
         // Hide summary for rows
         const summary = elementCard.querySelector('.element-editor-summary');
         if (summary) summary.style.display = 'none';
@@ -368,13 +374,6 @@ const withGridFunctionality = (OriginalElement) => {
         elementCard.classList.add(`col-lg-${currentSize}`);
         if (currentOffset > 0) {
           elementCard.classList.add(`offset-lg-${currentOffset}`);
-        }
-        // Apply same classes to controls sibling
-        if (controlsSibling && controlsSibling.classList.contains('column-size-controls')) {
-          controlsSibling.classList.add(`col-lg-${currentSize}`);
-          if (currentOffset > 0) {
-            controlsSibling.classList.add(`offset-lg-${currentOffset}`);
-          }
         }
       }
     }, [element.id, shouldBeRowElement, hasGridSchema, currentSize, currentOffset]);
@@ -405,20 +404,43 @@ const withGridFunctionality = (OriginalElement) => {
       };
 
       const hideControls = (e) => {
-        // Only hide if not hovering on element or controls
-        if (!elementCard.contains(e.relatedTarget) && !controlsSibling.contains(e.relatedTarget)) {
-          controlsSibling.classList.remove('is-visible');
-        }
+        // Run checks in the next tick (100ms) to allow the browser to complete focus transitions
+        setTimeout(() => {
+          // Do not hide if keyboard focus is currently active inside the card or controls
+          const active = document.activeElement;
+          if (elementCard.contains(active) || (controlsSibling && controlsSibling.contains(active))) {
+            return;
+          }
+
+          // Do not hide if mouse is currently hovering over the card or controls
+          if (elementCard.matches(':hover') || (controlsSibling && controlsSibling.matches(':hover'))) {
+            return;
+          }
+
+          if (controlsSibling) {
+            controlsSibling.classList.remove('is-visible');
+          }
+        }, 100);
       };
 
+      // Mouse triggers
       elementCard.addEventListener('mouseenter', showControls);
       elementCard.addEventListener('mouseleave', hideControls);
       controlsSibling.addEventListener('mouseleave', hideControls);
+
+      // Keyboard/Focus triggers
+      elementCard.addEventListener('focusin', showControls);
+      elementCard.addEventListener('focusout', hideControls);
+      controlsSibling.addEventListener('focusout', hideControls);
 
       return () => {
         elementCard.removeEventListener('mouseenter', showControls);
         elementCard.removeEventListener('mouseleave', hideControls);
         controlsSibling.removeEventListener('mouseleave', hideControls);
+
+        elementCard.removeEventListener('focusin', showControls);
+        elementCard.removeEventListener('focusout', hideControls);
+        controlsSibling.removeEventListener('focusout', hideControls);
       };
     }, [element.id]);
 

@@ -233,6 +233,7 @@ class BaseElementExtension extends Extension
 
         $blockSchema['grid'] = [
             'isRow' => $this->owner->ClassName === ElementRow::class,
+            'isFluid' => $this->owner->ClassName === ElementRow::class ? (bool)$this->owner->IsFluid : false,
             'gridColumns' => ElementalConfig::getGridColumnCount(),
             'column' => [
                 'defaultViewport' => ElementalConfig::getDefaultViewport(),

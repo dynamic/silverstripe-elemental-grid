@@ -152,6 +152,7 @@ class ColumnSize extends Component {
               value={this.state.currentSize}
               onChange={this.handleChangeSize}
               className="form-control"
+              aria-label={`Column span width for viewport ${viewport}`}
             >
               {this.getColSizeOptions().map((option) => (
                 <option key={`size-${option.value}`} value={option.value}>
@@ -172,6 +173,7 @@ class ColumnSize extends Component {
               value={this.state.currentOffset}
               onChange={this.handleChangeOffset}
               className="form-control"
+              aria-label={`Column offset spacing for viewport ${viewport}`}
             >
               {this.getOffsetOptions().map((option) => (
                 <option key={`offset-${option.value}`} value={option.value}>

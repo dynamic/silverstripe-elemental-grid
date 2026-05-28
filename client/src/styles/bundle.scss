@@ -165,79 +165,44 @@
 
 }
 
-/* HOVER BAR STYLING - Collapse to allow side-by-side element layout */
+/* HOVER BAR STYLING - Absolute positioning to prevent breaking side-by-side element layout */
 .element-editor__hover-bar {
-  /* CRITICAL: Collapse to not take any flex space */
-  width: 0 !important;
-  height: 0 !important;
-  flex: 0 0 0 !important;
-  flex-basis: 0 !important;
-  flex-grow: 0 !important;
-  flex-shrink: 0 !important;
-  overflow: hidden !important;
   position: absolute !important;
+  left: 0 !important;
+  right: 0 !important;
+  height: 0 !important;
+  width: auto !important;
+  flex: none !important;
+  overflow: visible !important;
   pointer-events: none !important;
   margin: 0 !important;
   padding: 0 !important;
-  /* No visual enhancements - we use our own drop zones for feedback */
+  z-index: 20;
 
-  /* Completely hide any hover bar visual feedback */
-  /* CRITICAL: Make hover bars not break flex layout for side-by-side columns */
   .element-editor__hover-bar-area {
     position: absolute !important;
-    width: 0 !important;
-    height: 0 !important;
-    overflow: hidden !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: 20px !important;
+    top: -10px !important;
     background: transparent !important;
     border: none !important;
     outline: none !important;
     box-shadow: none !important;
-    pointer-events: none !important;
+    pointer-events: auto !important;
+    cursor: pointer;
+    z-index: 21;
 
-    &:hover {
-      background: transparent !important;
-      border: none !important;
-      outline: none !important;
-      box-shadow: none !important;
-    }
-
-    &::before,
-    &::after {
-      display: none !important;
+    &:focus-visible {
+      outline: 2px solid #005ae1 !important;
+      outline-offset: -2px;
+      background-color: rgba(0, 90, 225, 0.08) !important;
     }
   }
+}
 
-  /* Hide the blue line and plus icon completely */
-  .element-editor__hover-bar-line {
-    display: none !important;
-    opacity: 0 !important;
-    visibility: hidden !important;
-
-    &::before {
-      display: none !important;
-      opacity: 0 !important;
-      transform: scale(0) !important;
-      visibility: hidden !important;
-    }
-  }
-
-  /* Hide on all hover/focus states */
-  .element-editor__hover-bar-area:hover,
-  .element-editor__hover-bar-area:focus,
-  .element-editor__hover-bar-area--focus {
-    .element-editor__hover-bar-line {
-      display: none !important;
-      opacity: 0 !important;
-      visibility: hidden !important;
-
-      &::before {
-        display: none !important;
-        opacity: 0 !important;
-        transform: scale(0) !important;
-        visibility: hidden !important;
-      }
-    }
-  }
+.elemental-editor-list.dragging-active .element-editor__hover-bar {
+  display: none !important;
 }
 
 /* REMOVED: CSS that breaks grid layout during drag operations
@@ -623,4 +588,112 @@
     height: auto;
   }
 }
+
+/* FULL WIDTH BREAKOUT ENGINE */
+
+/* 1. Base / Contained Layout (Default & Contained Rows) */
+.elemental-editor-list {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  padding: 0 30px !important;
+}
+
+/* Constrain and center elements to a virtual container width of 960px by default */
+.elemental-editor-list:not(:has(.is-fluid-row)) {
+  max-width: 960px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+/* Base styles for all column elements (including offsets) - constrained to 960px and responsive */
+.element-editor__element:not(.is-row) {
+  @for $i from 1 through 12 {
+    &.col-lg-#{$i} {
+      flex: 0 0 calc(min(100%, 960px) * (#{$i} / 12)) !important;
+      max-width: calc(min(100%, 960px) * (#{$i} / 12)) !important;
+    }
+  }
+  @for $i from 1 through 11 {
+    &.offset-lg-#{$i} {
+      margin-left: calc(min(100%, 960px) * (#{$i} / 12)) !important;
+    }
+  }
+}
+
+/* 2. Fluid Layout Breakout (Encountered a Fluid Row) */
+.elemental-editor-list:has(.is-fluid-row) {
+  /* Bleed out to fill the absolute edge of the CMS split pane */
+  max-width: 100% !important;
+  width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  padding: 0 !important;
+}
+
+/* Row blocks get their explicit widths: fluid row is 100%, contained row is max 960px (and centered) */
+.element-editor__element.is-fluid-row {
+  flex: 0 0 100% !important;
+  max-width: 100% !important;
+}
+
+.element-editor__element.is-contained-row {
+  flex: 0 0 min(100%, 960px) !important;
+  max-width: min(100%, 960px) !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+/* Align the first column immediately following a contained row to the centered container */
+.element-editor__element.is-contained-row + .element-editor__element:not(.is-row) {
+  margin-left: calc((100% - min(100%, 960px)) / 2) !important;
+
+  @for $i from 1 through 11 {
+    &.offset-lg-#{$i} {
+      margin-left: calc((100% - min(100%, 960px)) / 2 + min(100%, 960px) * (#{$i} / 12)) !important;
+    }
+  }
+}
+
+/* 3. Alternating Sibling Selector Engine */
+/* We alternate selectors up to 6 depths to ensure the closest row type controls the sibling columns' width */
+$selector-fluid: ".is-fluid-row";
+$selector-contained: ".is-fluid-row ~ .is-row";
+
+@for $depth from 1 through 6 {
+  // Fluid override: If under a fluid row, columns span full percentage width
+  #{$selector-fluid} ~ .element-editor__element:not(.is-row) {
+    @for $i from 1 through 12 {
+      &.col-lg-#{$i} {
+        flex: 0 0 calc(100% * (#{$i} / 12)) !important;
+        max-width: calc(100% * (#{$i} / 12)) !important;
+      }
+    }
+    @for $i from 1 through 11 {
+      &.offset-lg-#{$i} {
+        margin-left: calc(100% * (#{$i} / 12)) !important;
+      }
+    }
+  }
+
+  // Contained override: Reset back to constrained 960px width
+  #{$selector-contained} ~ .element-editor__element:not(.is-row) {
+    @for $i from 1 through 12 {
+      &.col-lg-#{$i} {
+        flex: 0 0 calc(min(100%, 960px) * (#{$i} / 12)) !important;
+        max-width: calc(min(100%, 960px) * (#{$i} / 12)) !important;
+      }
+    }
+    @for $i from 1 through 11 {
+      &.offset-lg-#{$i} {
+        margin-left: calc(min(100%, 960px) * (#{$i} / 12)) !important;
+      }
+    }
+  }
+
+  // Extend the selectors for the next nesting level
+  $selector-fluid: "#{$selector-contained} ~ .is-fluid-row";
+  $selector-contained: "#{$selector-fluid} ~ .is-row";
+}
+
+
 
