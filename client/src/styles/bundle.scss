@@ -205,6 +205,12 @@
     pointer-events: auto !important;
   }
 
+  /* Prevent popover from being squeezed inside narrow vertical/horizontal hover bars */
+  .element-editor-add-element {
+    width: 320px !important;
+    max-width: none !important;
+  }
+
   /* Horizontal Hover Bar Styles */
   &.hover-bar--horizontal {
     .element-editor__hover-bar-area {
