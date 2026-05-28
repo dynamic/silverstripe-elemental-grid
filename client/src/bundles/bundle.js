@@ -376,6 +376,11 @@ const withGridFunctionality = (OriginalElement) => {
           elementCard.classList.add(`offset-lg-${currentOffset}`);
         }
       }
+
+      // Re-position hover bars on grid layout adjustments
+      if (typeof window.positionHoverBars === 'function') {
+        requestAnimationFrame(window.positionHoverBars);
+      }
     }, [element.id, shouldBeRowElement, hasGridSchema, currentSize, currentOffset]);
 
     // Setup popover-style positioning for controls on hover
@@ -942,6 +947,57 @@ const triggerHoverBarForPosition = (targetElement, position) => {
   }
 };
 
+// Throttled function to calculate and update positioning for all block insertion hover bars
+const positionHoverBars = () => {
+  const list = document.querySelector('.elemental-editor-list');
+  if (!list || list.classList.contains('dragging-active')) return;
+
+  const holders = list.querySelectorAll('.element-editor__element-holder');
+  holders.forEach(holder => {
+    const hoverBar = holder.nextElementSibling;
+    if (!hoverBar || !hoverBar.classList.contains('element-editor__hover-bar')) {
+      return;
+    }
+
+    const nextHolder = hoverBar.nextElementSibling;
+    // Check if next card is on the same vertical row level (within a 15px threshold)
+    const isSideBySide = nextHolder && 
+                         nextHolder.classList.contains('element-editor__element-holder') &&
+                         Math.abs(holder.offsetTop - nextHolder.offsetTop) < 15;
+
+    if (isSideBySide) {
+      // 1. Position as a Vertical Hover Bar between columns
+      hoverBar.classList.add('hover-bar--vertical');
+      hoverBar.classList.remove('hover-bar--horizontal');
+
+      const top = holder.offsetTop;
+      const height = Math.max(holder.offsetHeight, nextHolder.offsetHeight);
+      const left = holder.offsetLeft + holder.offsetWidth;
+      
+      hoverBar.style.position = 'absolute';
+      hoverBar.style.top = `${top}px`;
+      hoverBar.style.left = `${left - 10}px`; // Center 20px wide hover area on the gap
+      hoverBar.style.width = '20px';
+      hoverBar.style.height = `${height}px`;
+      hoverBar.style.right = 'auto';
+    } else {
+      // 2. Position as a Horizontal Hover Bar below the row
+      hoverBar.classList.add('hover-bar--horizontal');
+      hoverBar.classList.remove('hover-bar--vertical');
+
+      const top = holder.offsetTop + holder.offsetHeight;
+      
+      hoverBar.style.position = 'absolute';
+      hoverBar.style.top = `${top - 10}px`; // Center 20px high hover area on the boundary
+      hoverBar.style.left = `${holder.offsetLeft}px`;
+      hoverBar.style.width = `${holder.offsetWidth}px`;
+      hoverBar.style.height = '20px';
+      hoverBar.style.right = 'auto';
+    }
+  });
+};
+window.positionHoverBars = positionHoverBars;
+
 // Prevent multiple initialization - use window object for cross-bundle scope
 window.document.addEventListener('DOMContentLoaded', () => {
   // CRITICAL: Guard against multiple initialization (memory leak prevention)
@@ -960,6 +1016,54 @@ window.document.addEventListener('DOMContentLoaded', () => {
     updater.component('Element', withGridFunctionality);
     console.log('[GRID DEBUG] Element enhanced with grid functionality');
   });
+
+  // Set up window resize listener (throttled)
+  let resizeTimeout;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(positionHoverBars, 150);
+  });
+
+  // Watch for the injection of .elemental-editor-list into the DOM
+  const initListObserver = () => {
+    const list = document.querySelector('.elemental-editor-list');
+    if (!list) return false;
+
+    // Check if we already initialized an observer for this list
+    if (list.__GRID_OBSERVER_INITIALIZED__) return true;
+    list.__GRID_OBSERVER_INITIALIZED__ = true;
+
+    const observer = new MutationObserver((mutations) => {
+      if (list.classList.contains('dragging-active')) return;
+      positionHoverBars();
+    });
+    
+    observer.observe(list, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['class']
+    });
+    
+    console.log('[GRID DEBUG] MutationObserver registered for elemental-editor-list');
+    positionHoverBars();
+    return true;
+  };
+
+  // Try immediately
+  if (!initListObserver()) {
+    // If not present yet, watch the CMS content area for its addition
+    const cmsContent = document.getElementById('cms-content') || document.body;
+    const cmsObserver = new MutationObserver(() => {
+      if (initListObserver()) {
+        cmsObserver.disconnect();
+      }
+    });
+    cmsObserver.observe(cmsContent, {
+      childList: true,
+      subtree: true
+    });
+  }
 
   // Removed toolbar enhancement - not needed with @dnd-kit architecture
 
