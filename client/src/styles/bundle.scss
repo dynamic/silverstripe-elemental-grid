@@ -137,6 +137,11 @@
   z-index: 15;
   /* Ensure elements are above drop zones (z-index: 10) for proper drag functionality */
 
+  &:hover,
+  &:focus-within {
+    z-index: 110 !important; /* Raise z-index on hover/focus to prevent dropdowns/controls from being cut off by siblings */
+  }
+
   &--expanded {
     flex: 0 0 100%;
     margin: 0;
@@ -532,6 +537,7 @@
   padding: 0.5rem 0.75rem;
   box-shadow: 0 4px 12px rgba(0, 113, 196, 0.15);
   box-sizing: border-box;
+  z-index: 100 !important;
 
   hr {
     display: none;
