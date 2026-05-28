@@ -36,10 +36,28 @@ class ColumnSize extends Component {
 
   getColSizeOptions() {
     const colSizes = [];
-    for (let size = 1; size <= this.props.gridColumns; size++) {
+    const total = this.props.gridColumns || 12;
+    for (let size = 1; size <= total; size++) {
+      const percentage = Math.round((size / total) * 100);
+      let fraction = '';
+      if (total === 12) {
+        if (size === 3) {
+          fraction = ' - 1/4';
+        } else if (size === 4) {
+          fraction = ' - 1/3';
+        } else if (size === 6) {
+          fraction = ' - 1/2';
+        } else if (size === 8) {
+          fraction = ' - 2/3';
+        } else if (size === 9) {
+          fraction = ' - 3/4';
+        } else if (size === 12) {
+          fraction = ' - Full';
+        }
+      }
       colSizes.push({
         value: size,
-        title: `Column ${size}/${this.props.gridColumns}`
+        title: `${size}/${total} (${percentage}%${fraction})`
       });
     }
     return colSizes;
@@ -51,10 +69,26 @@ class ColumnSize extends Component {
       value: 0,
       title: 'None'
     });
-    for (let size = 1; size <= this.props.gridColumns; size++) {
+    const total = this.props.gridColumns || 12;
+    for (let size = 1; size <= total; size++) {
+      const percentage = Math.round((size / total) * 100);
+      let fraction = '';
+      if (total === 12) {
+        if (size === 3) {
+          fraction = ' - 1/4';
+        } else if (size === 4) {
+          fraction = ' - 1/3';
+        } else if (size === 6) {
+          fraction = ' - 1/2';
+        } else if (size === 8) {
+          fraction = ' - 2/3';
+        } else if (size === 9) {
+          fraction = ' - 3/4';
+        }
+      }
       offsets.push({
         value: size,
-        title: `Column ${size}/${this.props.gridColumns}`
+        title: `${size}/${total} (${percentage}%${fraction})`
       });
     }
     return offsets;
@@ -138,8 +172,12 @@ class ColumnSize extends Component {
     const offsetName = `Elements[${this.props.elementId}][Offset${viewport}]`;
 
     return (
-      <div className="column-size-controls">
-        <hr />
+      <div
+        className="column-size-controls"
+        onClick={(e) => e.stopPropagation()}
+        onKeyUp={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.stopPropagation()}
+      >
         <div className="form-row">
           <div className="col-sm-6">
             <label htmlFor={sizeId} className="col-form-label">

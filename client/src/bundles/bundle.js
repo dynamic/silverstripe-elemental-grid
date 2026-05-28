@@ -1,5 +1,6 @@
 import Injector from 'lib/Injector';
 import React from 'react';
+import { createPortal } from 'react-dom';
 import ColumnSize from 'components/ColumnSize';
 import AddBlockToBottomButton from 'components/AddBlockToBottomButton';
 import AddBlockToTopButton from 'components/AddBlockToTopButton';
@@ -291,6 +292,36 @@ const restoreRowElementStyling = () => {
 const throttledRestoreRowStyling = throttle(restoreRowElementStyling, 100);
 const throttledMoveGridControls = throttle(moveGridControlsIntoCards, 200);
 
+// Portal component to render layout controls into the card headeractions
+const GridControlsPortal = ({ elementId, children }) => {
+  const [target, setTarget] = React.useState(null);
+
+  React.useLayoutEffect(() => {
+    let active = true;
+    let attempts = 0;
+    const findTarget = () => {
+      if (!active) return;
+      const icon = document.getElementById(`element-icon-${elementId}`);
+      const headerActions = icon
+        ? icon.closest('.element-editor-header')?.querySelector('.element-editor-header__actions')
+        : null;
+      if (headerActions) {
+        setTarget(headerActions);
+      } else if (attempts < 30) { // Limit search to 30 frames (~500ms) to prevent infinite loops
+        attempts++;
+        requestAnimationFrame(findTarget);
+      }
+    };
+    findTarget();
+    return () => {
+      active = false;
+    };
+  }, [elementId]);
+
+  if (!target) return null;
+  return createPortal(children, target);
+};
+
 // Create a higher-order component that enhances the existing Element with grid functionality
 // CRITICAL: Prevent duplicate component creation by caching enhanced components
 const enhancedComponentCache = new WeakMap();
@@ -351,13 +382,6 @@ const withGridFunctionality = (OriginalElement) => {
       elementCard.className = elementCard.className.replace(/\boffset-lg-\d+\b/g, '');
       elementCard.classList.remove('is-row', 'is-fluid-row', 'is-contained-row');
 
-      // Also find and update the controls sibling (next element after the card)
-      const controlsSibling = elementCard.nextElementSibling;
-      if (controlsSibling && controlsSibling.classList.contains('column-size-controls')) {
-        controlsSibling.className = controlsSibling.className.replace(/\bcol-lg-\d+\b/g, '');
-        controlsSibling.className = controlsSibling.className.replace(/\boffset-lg-\d+\b/g, '');
-      }
-
       // Add grid classes
       if (shouldBeRowElement) {
         const isFluid = element && element.blockSchema && element.blockSchema.grid && element.blockSchema.grid.isFluid;
@@ -382,72 +406,6 @@ const withGridFunctionality = (OriginalElement) => {
         requestAnimationFrame(window.positionHoverBars);
       }
     }, [element.id, shouldBeRowElement, hasGridSchema, currentSize, currentOffset]);
-
-    // Setup popover-style positioning for controls on hover
-    React.useEffect(() => {
-      const icon = document.getElementById(`element-icon-${element.id}`);
-      const elementCard = icon ? icon.closest('.element-editor__element') : null;
-      if (!elementCard) return;
-
-      const controlsSibling = elementCard.nextElementSibling;
-      if (!controlsSibling || !controlsSibling.classList.contains('column-size-controls')) return;
-
-      // Get the parent container for relative positioning
-      const parentList = elementCard.parentElement;
-      if (parentList && !parentList.style.position) {
-        parentList.style.position = 'relative';
-      }
-
-      const showControls = () => {
-        // Position controls absolutely below element
-        controlsSibling.style.position = 'absolute';
-        controlsSibling.style.top = (elementCard.offsetTop + elementCard.offsetHeight) + 'px';
-        controlsSibling.style.left = elementCard.offsetLeft + 'px';
-        controlsSibling.style.width = elementCard.offsetWidth + 'px';
-        controlsSibling.style.zIndex = '100';
-        controlsSibling.classList.add('is-visible');
-      };
-
-      const hideControls = (e) => {
-        // Run checks in the next tick (100ms) to allow the browser to complete focus transitions
-        setTimeout(() => {
-          // Do not hide if keyboard focus is currently active inside the card or controls
-          const active = document.activeElement;
-          if (elementCard.contains(active) || (controlsSibling && controlsSibling.contains(active))) {
-            return;
-          }
-
-          // Do not hide if mouse is currently hovering over the card or controls
-          if (elementCard.matches(':hover') || (controlsSibling && controlsSibling.matches(':hover'))) {
-            return;
-          }
-
-          if (controlsSibling) {
-            controlsSibling.classList.remove('is-visible');
-          }
-        }, 100);
-      };
-
-      // Mouse triggers
-      elementCard.addEventListener('mouseenter', showControls);
-      elementCard.addEventListener('mouseleave', hideControls);
-      controlsSibling.addEventListener('mouseleave', hideControls);
-
-      // Keyboard/Focus triggers
-      elementCard.addEventListener('focusin', showControls);
-      elementCard.addEventListener('focusout', hideControls);
-      controlsSibling.addEventListener('focusout', hideControls);
-
-      return () => {
-        elementCard.removeEventListener('mouseenter', showControls);
-        elementCard.removeEventListener('mouseleave', hideControls);
-        controlsSibling.removeEventListener('mouseleave', hideControls);
-
-        elementCard.removeEventListener('focusin', showControls);
-        elementCard.removeEventListener('focusout', hideControls);
-        controlsSibling.removeEventListener('focusout', hideControls);
-      };
-    }, [element.id]);
 
     // Pass through original props - don't modify sortable behavior
     const enhancedProps = {
@@ -486,10 +444,16 @@ const withGridFunctionality = (OriginalElement) => {
         key: `grid-control-${element.id}`,
       });
 
-      // Return Fragment with element + controls (no wrapper div!)
+      // Wrap the controls in our portal to inject them into the header actions
+      const portalComponent = React.createElement(GridControlsPortal, {
+        elementId: element.id,
+        key: `grid-portal-${element.id}`,
+      }, gridComponent);
+
+      // Return Fragment with element + portal component
       return React.createElement(React.Fragment, { key: `grid-fragment-${element.id}` }, [
         originalElement,
-        gridComponent,
+        portalComponent,
       ]);
     }
 
@@ -952,7 +916,7 @@ const positionHoverBars = () => {
   const list = document.querySelector('.elemental-editor-list');
   if (!list || list.classList.contains('dragging-active')) return;
 
-  const holders = list.querySelectorAll('.element-editor__element-holder');
+  const holders = list.querySelectorAll('.element-editor__element');
   holders.forEach(holder => {
     const hoverBar = holder.nextElementSibling;
     if (!hoverBar || !hoverBar.classList.contains('element-editor__hover-bar')) {
@@ -962,7 +926,7 @@ const positionHoverBars = () => {
     const nextHolder = hoverBar.nextElementSibling;
     // Check if next card is on the same vertical row level (within a 15px threshold)
     const isSideBySide = nextHolder && 
-                         nextHolder.classList.contains('element-editor__element-holder') &&
+                         nextHolder.classList.contains('element-editor__element') &&
                          Math.abs(holder.offsetTop - nextHolder.offsetTop) < 15;
 
     if (isSideBySide) {
@@ -1035,14 +999,17 @@ window.document.addEventListener('DOMContentLoaded', () => {
 
     const observer = new MutationObserver((mutations) => {
       if (list.classList.contains('dragging-active')) return;
-      positionHoverBars();
+      
+      // Defer positioning updates to the next frame to prevent rendering conflicts with React
+      requestAnimationFrame(positionHoverBars);
     });
     
+    // Only observe child additions/removals (childList) directly on the list container.
+    // Since card and hover bar class changes are reactive and managed by the React HOC,
+    // we do not need to observe attribute/class changes, avoiding the recursive mutation loop.
     observer.observe(list, {
       childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ['class']
+      subtree: false
     });
     
     console.log('[GRID DEBUG] MutationObserver registered for elemental-editor-list');

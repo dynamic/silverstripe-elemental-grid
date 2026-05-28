@@ -317,9 +317,8 @@ const Element = (props) => {
               />
             );
           }
-          // Not rendering ColumnSize component - element is a row or lacks grid schema
-          return null;
         })()}
+      </div>
     </div>
   );
 };

@@ -199,6 +199,12 @@
     }
   }
 
+  /* Ensure the add block popover remains interactive despite parent having pointer-events: none */
+  .element-editor-add-element,
+  .popover {
+    pointer-events: auto !important;
+  }
+
   /* Horizontal Hover Bar Styles */
   &.hover-bar--horizontal {
     .element-editor__hover-bar-area {
@@ -592,7 +598,7 @@
   padding: 0 60px;
 
   /* Element holders need relative positioning for absolute drop zones */
-  .element-editor__element-holder {
+  .element-editor__element {
     position: relative;
     margin: 8px 0;
 
@@ -625,29 +631,22 @@
   margin-right: 10px;
 }
 
-/* COLUMN SIZE CONTROLS - Popover style positioning */
-/* Hidden by default, positioned absolutely via JS on hover */
+/* COLUMN SIZE CONTROLS - Inline Header Styling */
 .column-size-controls {
-  display: none !important;
-  background: #fff;
-  border: 1px solid #0071c4;
-  border-radius: 4px;
-  padding: 0.5rem 0.75rem;
-  box-shadow: 0 4px 12px rgba(0, 113, 196, 0.15);
-  box-sizing: border-box;
-  z-index: 100 !important;
+  display: flex !important;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+  z-index: 5 !important;
+  order: -1; /* Position before action menus and caret */
+  margin-right: 15px; /* Give some spacing to the right of controls */
 
   hr {
     display: none;
-  }
-
-  /* Shown via JS .is-visible class */
-  &.is-visible {
-    display: flex !important;
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 1rem;
   }
 
   /* Horizontal layout for form fields */
@@ -655,9 +654,9 @@
     margin: 0;
     display: flex;
     flex-direction: row !important;
-    flex-wrap: wrap !important;
+    flex-wrap: nowrap !important;
     align-items: center;
-    gap: 1rem;
+    gap: 0.5rem;
   }
 
   .form-group {
@@ -665,31 +664,49 @@
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 0.35rem;
+    gap: 0.25rem;
   }
 
-  /* Override Bootstrap .col-sm-6 for horizontal dropdowns */
+  /* Override Bootstrap .col-sm-6 for inline dropdowns */
   .col-sm-6 {
     flex: 0 0 auto !important;
     max-width: none !important;
     width: auto !important;
     padding: 0 !important;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.25rem;
   }
 
-  /* Larger fonts */
+  /* Premium typography for header layout labels */
   label {
-    font-size: 0.875rem !important;
-    font-weight: 500;
-    color: #333;
+    font-size: 0.7rem !important;
+    font-weight: 700;
+    color: #555;
     margin: 0;
     white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
 
   .form-control {
-    font-size: 0.9rem !important;
-    min-width: 100px !important;
-    padding: 0.25rem 0.5rem !important;
-    height: auto;
+    font-size: 0.75rem !important;
+    min-width: 80px !important;
+    max-width: 100px !important;
+    padding: 0.15rem 0.35rem !important;
+    height: 24px !important;
+    border: 1px solid #ced4da;
+    border-radius: 3px;
+    background-color: #fff;
+    color: #495057;
+    cursor: pointer;
+
+    &:focus {
+      border-color: #0071c4;
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(0, 113, 196, 0.15);
+    }
   }
 }
 
@@ -748,7 +765,8 @@
 }
 
 /* Align the first column immediately following a contained row to the centered container */
-.element-editor__element.is-contained-row + .element-editor__element:not(.is-row) {
+.element-editor__element.is-contained-row + .element-editor__element:not(.is-row),
+.element-editor__element.is-contained-row + .element-editor__hover-bar + .element-editor__element:not(.is-row) {
   margin-left: calc((100% - min(100%, 960px)) / 2) !important;
 
   @for $i from 1 through 11 {
