@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
 import { Component } from 'react';
-import { Input } from 'reactstrap';
+import { Input, Button, Popover, PopoverHeader, PopoverBody } from 'reactstrap';
 import backend from 'lib/Backend';
 import Config from 'lib/Config';
 import { getConfig } from 'state/editor/elementConfig';
@@ -11,16 +11,63 @@ class ColumnSize extends Component {
     this.state = {
       currentSize: props.size || 12,
       currentOffset: props.offset || 0,
+      popoverOpen: false,
     };
     this.handleChangeSize = this.handleChangeSize.bind(this);
     this.handleChangeOffset = this.handleChangeOffset.bind(this);
+    this.togglePopover = this.togglePopover.bind(this);
+    this.handlePopoverKeyDown = this.handlePopoverKeyDown.bind(this);
     
     // Auto-save is enabled by default in SS6 to persist changes immediately
     // This is the only working method for grid changes in SilverStripe 6
     this.autoSaveEnabled = props.autoSaveEnabled || false;
+
+    this.toggleBtnRef = null;
+    this.sizeSelectRef = null;
+    this.offsetSelectRef = null;
   }
 
-  componentDidUpdate(prevProps) {
+  togglePopover() {
+    this.setState((prevState) => ({
+      popoverOpen: !prevState.popoverOpen,
+    }));
+  }
+
+  handlePopoverKeyDown(event) {
+    // Stop propagation so it doesn't expand/collapse elemental cards or trigger shortcuts
+    event.stopPropagation();
+
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      this.setState({ popoverOpen: false });
+      return;
+    }
+
+    if (event.key === 'Tab') {
+      const sizeEl = this.sizeSelectRef;
+      const offsetEl = this.offsetSelectRef;
+      if (!sizeEl || !offsetEl) {
+        return;
+      }
+
+      const activeEl = document.activeElement;
+
+      // Trap focus between Size and Offset dropdowns inside the popover
+      if (event.shiftKey) {
+        if (activeEl === sizeEl) {
+          event.preventDefault();
+          offsetEl.focus({ preventScroll: true });
+        }
+      } else {
+        if (activeEl === offsetEl) {
+          event.preventDefault();
+          sizeEl.focus({ preventScroll: true });
+        }
+      }
+    }
+  }
+
+  componentDidUpdate(prevProps, prevState) {
     // Update state if props change (e.g., after a successful mutation)
     const stateUpdate = {};
     if (prevProps.size !== this.props.size) {
@@ -31,6 +78,21 @@ class ColumnSize extends Component {
     }
     if (Object.keys(stateUpdate).length > 0) {
       this.setState(stateUpdate);
+    }
+
+    // Auto-focus management
+    if (prevState.popoverOpen !== this.state.popoverOpen) {
+      if (this.state.popoverOpen) {
+        setTimeout(() => {
+          if (this.sizeSelectRef) {
+            this.sizeSelectRef.focus({ preventScroll: true });
+          }
+        }, 50);
+      } else {
+        if (this.toggleBtnRef) {
+          this.toggleBtnRef.focus({ preventScroll: true });
+        }
+      }
     }
   }
 
@@ -173,54 +235,99 @@ class ColumnSize extends Component {
 
     return (
       <div
-        className="column-size-controls"
+        className="column-size-controls-wrapper"
         onClick={(e) => e.stopPropagation()}
         onKeyUp={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
       >
-        <div className="form-row">
-          <div className="col-sm-6">
-            <label htmlFor={sizeId} className="col-form-label">
-              Size {this.props.defaultViewport}
-            </label>
-            <Input
-              type="select"
-              id={sizeId}
-              name={sizeName}
-              value={this.state.currentSize}
-              onChange={this.handleChangeSize}
-              className="form-control"
-              aria-label={`Column span width for viewport ${viewport}`}
-            >
-              {this.getColSizeOptions().map((option) => (
-                <option key={`size-${option.value}`} value={option.value}>
-                  {option.title}
-                </option>
-              ))}
-            </Input>
-          </div>
+        <Button
+          color="link"
+          className="btn--icon-only font-icon-columns element-editor-header__action"
+          id={`grid-toggle-${this.props.elementId}`}
+          title="Grid Layout Settings"
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            this.togglePopover();
+          }}
+          innerRef={(el) => { this.toggleBtnRef = el; }}
+        />
+        <Popover
+          isOpen={this.state.popoverOpen}
+          toggle={this.togglePopover}
+          placement="bottom-end"
+          target={`grid-toggle-${this.props.elementId}`}
+          className="grid-layout-popover"
+          autoFocus={false}
+          container="body"
+          modifiers={[
+            {
+              name: 'preventOverflow',
+              options: {
+                boundary: 'viewport',
+              },
+            },
+            {
+              name: 'flip',
+              options: {
+                boundary: 'viewport',
+              },
+            },
+          ]}
+        >
+          <PopoverHeader>Grid Layout</PopoverHeader>
+          <PopoverBody
+            onKeyDown={this.handlePopoverKeyDown}
+            onKeyUp={(e) => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="form-group grid-popover-form">
+              <div className="mb-2">
+                <label htmlFor={sizeId} className="form-label">
+                  Size ({viewport})
+                </label>
+                <Input
+                  type="select"
+                  id={sizeId}
+                  name={sizeName}
+                  value={this.state.currentSize}
+                  onChange={this.handleChangeSize}
+                  className="form-control"
+                  aria-label={`Column span width for viewport ${viewport}`}
+                  innerRef={(el) => { this.sizeSelectRef = el; }}
+                >
+                  {this.getColSizeOptions().map((option) => (
+                    <option key={`size-${option.value}`} value={option.value}>
+                      {option.title}
+                    </option>
+                  ))}
+                </Input>
+              </div>
 
-          <div className="col-sm-6">
-            <label htmlFor={offsetId} className="col-form-label">
-              Offset {this.props.defaultViewport}
-            </label>
-            <Input
-              type="select"
-              id={offsetId}
-              name={offsetName}
-              value={this.state.currentOffset}
-              onChange={this.handleChangeOffset}
-              className="form-control"
-              aria-label={`Column offset spacing for viewport ${viewport}`}
-            >
-              {this.getOffsetOptions().map((option) => (
-                <option key={`offset-${option.value}`} value={option.value}>
-                  {option.title}
-                </option>
-              ))}
-            </Input>
-          </div>
-        </div>
+              <div>
+                <label htmlFor={offsetId} className="form-label">
+                  Offset ({viewport})
+                </label>
+                <Input
+                  type="select"
+                  id={offsetId}
+                  name={offsetName}
+                  value={this.state.currentOffset}
+                  onChange={this.handleChangeOffset}
+                  className="form-control"
+                  aria-label={`Column offset spacing for viewport ${viewport}`}
+                  innerRef={(el) => { this.offsetSelectRef = el; }}
+                >
+                  {this.getOffsetOptions().map((option) => (
+                    <option key={`offset-${option.value}`} value={option.value}>
+                      {option.title}
+                    </option>
+                  ))}
+                </Input>
+              </div>
+            </div>
+          </PopoverBody>
+        </Popover>
       </div>
     );
   }

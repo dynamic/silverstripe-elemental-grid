@@ -267,6 +267,7 @@ Object.defineProperty(exports, "__esModule", ({
 exports["default"] = void 0;
 __webpack_require__(/*! core-js/modules/es.function.bind.js */ "./node_modules/core-js/modules/es.function.bind.js");
 __webpack_require__(/*! core-js/modules/es.object.keys.js */ "./node_modules/core-js/modules/es.object.keys.js");
+__webpack_require__(/*! core-js/modules/web.timers.js */ "./node_modules/core-js/modules/web.timers.js");
 __webpack_require__(/*! core-js/modules/es.array.concat.js */ "./node_modules/core-js/modules/es.array.concat.js");
 __webpack_require__(/*! core-js/modules/es.parse-int.js */ "./node_modules/core-js/modules/es.parse-int.js");
 __webpack_require__(/*! core-js/modules/es.regexp.exec.js */ "./node_modules/core-js/modules/es.regexp.exec.js");
@@ -305,16 +306,67 @@ var ColumnSize = function (_Component) {
     _this = _super.call(this, props);
     _this.state = {
       currentSize: props.size || 12,
-      currentOffset: props.offset || 0
+      currentOffset: props.offset || 0,
+      popoverOpen: false
     };
     _this.handleChangeSize = _this.handleChangeSize.bind(_assertThisInitialized(_this));
     _this.handleChangeOffset = _this.handleChangeOffset.bind(_assertThisInitialized(_this));
+    _this.togglePopover = _this.togglePopover.bind(_assertThisInitialized(_this));
+    _this.handlePopoverKeyDown = _this.handlePopoverKeyDown.bind(_assertThisInitialized(_this));
     _this.autoSaveEnabled = props.autoSaveEnabled || false;
+    _this.toggleBtnRef = null;
+    _this.sizeSelectRef = null;
+    _this.offsetSelectRef = null;
     return _this;
   }
   _createClass(ColumnSize, [{
+    key: "togglePopover",
+    value: function togglePopover() {
+      this.setState(function (prevState) {
+        return {
+          popoverOpen: !prevState.popoverOpen
+        };
+      });
+    }
+  }, {
+    key: "handlePopoverKeyDown",
+    value: function handlePopoverKeyDown(event) {
+      event.stopPropagation();
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        this.setState({
+          popoverOpen: false
+        });
+        return;
+      }
+      if (event.key === 'Tab') {
+        var sizeEl = this.sizeSelectRef;
+        var offsetEl = this.offsetSelectRef;
+        if (!sizeEl || !offsetEl) {
+          return;
+        }
+        var activeEl = document.activeElement;
+        if (event.shiftKey) {
+          if (activeEl === sizeEl) {
+            event.preventDefault();
+            offsetEl.focus({
+              preventScroll: true
+            });
+          }
+        } else {
+          if (activeEl === offsetEl) {
+            event.preventDefault();
+            sizeEl.focus({
+              preventScroll: true
+            });
+          }
+        }
+      }
+    }
+  }, {
     key: "componentDidUpdate",
-    value: function componentDidUpdate(prevProps) {
+    value: function componentDidUpdate(prevProps, prevState) {
+      var _this2 = this;
       var stateUpdate = {};
       if (prevProps.size !== this.props.size) {
         stateUpdate.currentSize = this.props.size || 12;
@@ -324,6 +376,23 @@ var ColumnSize = function (_Component) {
       }
       if (Object.keys(stateUpdate).length > 0) {
         this.setState(stateUpdate);
+      }
+      if (prevState.popoverOpen !== this.state.popoverOpen) {
+        if (this.state.popoverOpen) {
+          setTimeout(function () {
+            if (_this2.sizeSelectRef) {
+              _this2.sizeSelectRef.focus({
+                preventScroll: true
+              });
+            }
+          }, 50);
+        } else {
+          if (this.toggleBtnRef) {
+            this.toggleBtnRef.focus({
+              preventScroll: true
+            });
+          }
+        }
       }
     }
   }, {
@@ -453,13 +522,14 @@ var ColumnSize = function (_Component) {
   }, {
     key: "render",
     value: function render() {
+      var _this3 = this;
       var sizeId = "columnSize-".concat(this.props.elementId);
       var offsetId = "columnOffset-".concat(this.props.elementId);
       var viewport = this.props.defaultViewport || 'MD';
       var sizeName = "Elements[".concat(this.props.elementId, "][Size").concat(viewport, "]");
       var offsetName = "Elements[".concat(this.props.elementId, "][Offset").concat(viewport, "]");
       return React.createElement("div", {
-        className: "column-size-controls",
+        className: "column-size-controls-wrapper",
         onClick: function onClick(e) {
           return e.stopPropagation();
         },
@@ -469,45 +539,89 @@ var ColumnSize = function (_Component) {
         onKeyDown: function onKeyDown(e) {
           return e.stopPropagation();
         }
+      }, React.createElement(_reactstrap.Button, {
+        color: "link",
+        className: "btn--icon-only font-icon-columns element-editor-header__action",
+        id: "grid-toggle-".concat(this.props.elementId),
+        title: "Grid Layout Settings",
+        type: "button",
+        onClick: function onClick(e) {
+          e.stopPropagation();
+          _this3.togglePopover();
+        },
+        innerRef: function innerRef(el) {
+          _this3.toggleBtnRef = el;
+        }
+      }), React.createElement(_reactstrap.Popover, {
+        isOpen: this.state.popoverOpen,
+        toggle: this.togglePopover,
+        placement: "bottom-end",
+        target: "grid-toggle-".concat(this.props.elementId),
+        className: "grid-layout-popover",
+        autoFocus: false,
+        container: "body",
+        modifiers: [{
+          name: 'preventOverflow',
+          options: {
+            boundary: 'viewport'
+          }
+        }, {
+          name: 'flip',
+          options: {
+            boundary: 'viewport'
+          }
+        }]
+      }, React.createElement(_reactstrap.PopoverHeader, null, "Grid Layout"), React.createElement(_reactstrap.PopoverBody, {
+        onKeyDown: this.handlePopoverKeyDown,
+        onKeyUp: function onKeyUp(e) {
+          return e.stopPropagation();
+        },
+        onClick: function onClick(e) {
+          return e.stopPropagation();
+        }
       }, React.createElement("div", {
-        className: "form-row"
+        className: "form-group grid-popover-form"
       }, React.createElement("div", {
-        className: "col-sm-6"
+        className: "mb-2"
       }, React.createElement("label", {
         htmlFor: sizeId,
-        className: "col-form-label"
-      }, "Size ", this.props.defaultViewport), React.createElement(_reactstrap.Input, {
+        className: "form-label"
+      }, "Size (", viewport, ")"), React.createElement(_reactstrap.Input, {
         type: "select",
         id: sizeId,
         name: sizeName,
         value: this.state.currentSize,
         onChange: this.handleChangeSize,
         className: "form-control",
-        "aria-label": "Column span width for viewport ".concat(viewport)
+        "aria-label": "Column span width for viewport ".concat(viewport),
+        innerRef: function innerRef(el) {
+          _this3.sizeSelectRef = el;
+        }
       }, this.getColSizeOptions().map(function (option) {
         return React.createElement("option", {
           key: "size-".concat(option.value),
           value: option.value
         }, option.title);
-      }))), React.createElement("div", {
-        className: "col-sm-6"
-      }, React.createElement("label", {
+      }))), React.createElement("div", null, React.createElement("label", {
         htmlFor: offsetId,
-        className: "col-form-label"
-      }, "Offset ", this.props.defaultViewport), React.createElement(_reactstrap.Input, {
+        className: "form-label"
+      }, "Offset (", viewport, ")"), React.createElement(_reactstrap.Input, {
         type: "select",
         id: offsetId,
         name: offsetName,
         value: this.state.currentOffset,
         onChange: this.handleChangeOffset,
         className: "form-control",
-        "aria-label": "Column offset spacing for viewport ".concat(viewport)
+        "aria-label": "Column offset spacing for viewport ".concat(viewport),
+        innerRef: function innerRef(el) {
+          _this3.offsetSelectRef = el;
+        }
       }, this.getOffsetOptions().map(function (option) {
         return React.createElement("option", {
           key: "offset-".concat(option.value),
           value: option.value
         }, option.title);
-      })))));
+      })))))));
     }
   }]);
   return ColumnSize;

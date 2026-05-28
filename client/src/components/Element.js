@@ -28,8 +28,7 @@ const Element = (props) => {
   const [initialTab, setInitialTab] = useState('');
   const [loadingError, setLoadingError] = useState(false);
   const [childRenderingError, setChildRenderingError] = useState(false);
-  const [size, setSize] = useState(columnData.size || 12);
-  const [offset, setOffset] = useState(columnData.offset || 0);
+
 
   const {
     attributes,
@@ -114,10 +113,13 @@ const Element = (props) => {
   const getColumnSizeClassNames = () => {
     const { element } = props;
     const gridSchema = element && element.blockSchema && element.blockSchema.grid;
+    const columnData = (gridSchema && gridSchema.column) || {};
+    const cardSize = columnData.size || 12;
+    const cardOffset = columnData.offset || 0;
 
     return {
-      [`col-lg-${size}`]: true,
-      [`offset-lg-${offset}`]: offset > 0,
+      [`col-lg-${cardSize}`]: true,
+      [`offset-lg-${cardOffset}`]: cardOffset > 0,
       'is-row': gridSchema && gridSchema.isRow === true,
       'is-dragged-top': props.isDraggedOver && props.isDraggedOverPosition === 'top',
       'is-dragged-bottom': props.isDraggedOver && props.isDraggedOverPosition === 'bottom'
@@ -210,13 +212,7 @@ const Element = (props) => {
     }
   };
 
-  const handleChangeSize = (e) => {
-    setSize(e.target.value);
-  };
 
-  const handleChangeOffset = (e) => {
-    setOffset(e.target.value);
-  };
 
   // Render
   const {
@@ -298,26 +294,7 @@ const Element = (props) => {
           </div>
         }
 
-        {(() => {
-          const gridSchema = element && element.blockSchema && element.blockSchema.grid;
-          const columnData = (gridSchema && gridSchema.column) || {};
 
-          if (gridSchema && !gridSchema.isRow && ColumnSizeComponent) {
-            // Rendering ColumnSize component
-            return (
-              <ColumnSizeComponent
-                elementId={element.id}
-                areaId={areaId}
-                size={columnData.size || 12}
-                defaultViewport={columnData.defaultViewport || 'LG'}
-                gridColumns={gridSchema.gridColumns || 12}
-                offset={columnData.offset || 0}
-                handleChangeSize={handleChangeSize}
-                handleChangeOffset={handleChangeOffset}
-              />
-            );
-          }
-        })()}
       </div>
     </div>
   );

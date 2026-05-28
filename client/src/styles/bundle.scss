@@ -631,81 +631,107 @@
   margin-right: 10px;
 }
 
-/* COLUMN SIZE CONTROLS - Inline Header Styling */
-.column-size-controls {
-  display: flex !important;
-  flex-direction: row;
+/* COLUMN SIZE CONTROLS - Popover Styling */
+.column-size-controls-wrapper {
+  display: inline-flex !important;
   align-items: center;
-  gap: 0.5rem;
-  background: transparent !important;
-  border: none !important;
-  padding: 0 !important;
-  box-shadow: none !important;
   z-index: 5 !important;
   order: -1; /* Position before action menus and caret */
-  margin-right: 15px; /* Give some spacing to the right of controls */
 
-  hr {
-    display: none;
-  }
-
-  /* Horizontal layout for form fields */
-  .form-row {
-    margin: 0;
-    display: flex;
-    flex-direction: row !important;
-    flex-wrap: nowrap !important;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  .form-group {
-    margin: 0;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 0.25rem;
-  }
-
-  /* Override Bootstrap .col-sm-6 for inline dropdowns */
-  .col-sm-6 {
-    flex: 0 0 auto !important;
-    max-width: none !important;
-    width: auto !important;
-    padding: 0 !important;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 0.25rem;
-  }
-
-  /* Premium typography for header layout labels */
-  label {
-    font-size: 0.7rem !important;
-    font-weight: 700;
+  .element-editor-header__action {
     color: #555;
-    margin: 0;
-    white-space: nowrap;
+    font-size: 1rem;
+    padding: 0.25rem 0.5rem;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    transition: color 0.15s ease-in-out;
+    margin-right: 5px;
+
+    &:hover, &:focus {
+      color: #0071c4;
+      background: transparent;
+      text-decoration: none;
+    }
+  }
+}
+
+.grid-layout-popover {
+  position: absolute !important;
+  width: 0 !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  pointer-events: none !important;
+
+  .popover {
+    pointer-events: auto !important;
+    background-color: #fff;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1060;
+    width: 260px;
+    border-color: rgba(0, 0, 0, 0.15) !important;
+  }
+
+  .popover-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    color: #495057;
+    margin: 0;
   }
 
-  .form-control {
-    font-size: 0.75rem !important;
-    min-width: 80px !important;
-    max-width: 100px !important;
-    padding: 0.15rem 0.35rem !important;
-    height: 24px !important;
-    border: 1px solid #ced4da;
-    border-radius: 3px;
-    background-color: #fff;
-    color: #495057;
-    cursor: pointer;
+  .popover-body {
+    padding: 0.75rem;
+  }
 
-    &:focus {
-      border-color: #0071c4;
-      outline: none;
-      box-shadow: 0 0 0 2px rgba(0, 113, 196, 0.15);
+  .grid-popover-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+
+    .mb-2 {
+      margin-bottom: 0.5rem !important;
+      display: flex;
+      flex-direction: column;
+    }
+
+    label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 0.25rem;
+      display: inline-block;
+    }
+
+    .form-control {
+      font-size: 0.75rem !important;
+      padding: 0.25rem 0.5rem !important;
+      height: 30px !important;
+      border: 1px solid #ced4da;
+      border-radius: 3px;
+      background-color: #fff;
+      color: #495057;
+      width: 100%;
+      cursor: pointer;
+      display: block;
+      
+      &:focus {
+        border-color: #0071c4;
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(0, 113, 196, 0.15);
+      }
     }
   }
 }
@@ -717,17 +743,19 @@
   display: flex !important;
   flex-wrap: wrap !important;
   padding: 0 30px !important;
-}
-
-/* Constrain and center elements to a virtual container width of 960px by default */
-.elemental-editor-list:not(:has(.is-fluid-row)) {
-  max-width: 960px !important;
-  margin-left: auto !important;
-  margin-right: auto !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
 }
 
 /* Base styles for all column elements (including offsets) - constrained to 960px and responsive */
 .element-editor__element:not(.is-row) {
+  /* Override header info max-width to allow layout action button and expand chevron to sit cleanly */
+  .element-editor-header__info {
+    max-width: calc(100% - 90px) !important;
+  }
+
   @for $i from 1 through 12 {
     &.col-lg-#{$i} {
       flex: 0 0 calc(min(100%, 960px) * (#{$i} / 12)) !important;
@@ -737,6 +765,18 @@
   @for $i from 1 through 11 {
     &.offset-lg-#{$i} {
       margin-left: calc(min(100%, 960px) * (#{$i} / 12)) !important;
+    }
+  }
+}
+
+/* Centering columns at the very start of the list when they are contained (default virtual grid) */
+.elemental-editor-list > .element-editor__element:first-child:not(.is-row),
+.elemental-editor-list > .element-editor__hover-bar:first-child + .element-editor__element:not(.is-row) {
+  margin-left: calc((100% - min(100%, 960px)) / 2) !important;
+
+  @for $i from 1 through 11 {
+    &.offset-lg-#{$i} {
+      margin-left: calc((100% - min(100%, 960px)) / 2 + min(100%, 960px) * (#{$i} / 12)) !important;
     }
   }
 }
