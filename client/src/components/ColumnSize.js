@@ -25,6 +25,7 @@ class ColumnSize extends Component {
     this.toggleBtnRef = null;
     this.sizeSelectRef = null;
     this.offsetSelectRef = null;
+    this.closeBtnRef = null;
   }
 
   togglePopover() {
@@ -46,20 +47,32 @@ class ColumnSize extends Component {
     if (event.key === 'Tab') {
       const sizeEl = this.sizeSelectRef;
       const offsetEl = this.offsetSelectRef;
-      if (!sizeEl || !offsetEl) {
+      const closeEl = this.closeBtnRef;
+      if (!sizeEl || !offsetEl || !closeEl) {
         return;
       }
 
       const activeEl = document.activeElement;
 
-      // Trap focus between Size and Offset dropdowns inside the popover
       if (event.shiftKey) {
         if (activeEl === sizeEl) {
           event.preventDefault();
+          closeEl.focus({ preventScroll: true });
+        } else if (activeEl === closeEl) {
+          event.preventDefault();
           offsetEl.focus({ preventScroll: true });
+        } else if (activeEl === offsetEl) {
+          event.preventDefault();
+          sizeEl.focus({ preventScroll: true });
         }
       } else {
-        if (activeEl === offsetEl) {
+        if (activeEl === sizeEl) {
+          event.preventDefault();
+          offsetEl.focus({ preventScroll: true });
+        } else if (activeEl === offsetEl) {
+          event.preventDefault();
+          closeEl.focus({ preventScroll: true });
+        } else if (activeEl === closeEl) {
           event.preventDefault();
           sizeEl.focus({ preventScroll: true });
         }
@@ -251,8 +264,11 @@ class ColumnSize extends Component {
             this.togglePopover();
           }}
           innerRef={(el) => { this.toggleBtnRef = el; }}
+          aria-expanded={this.state.popoverOpen}
+          aria-controls={`grid-popover-${this.props.elementId}`}
         />
         <Popover
+          id={`grid-popover-${this.props.elementId}`}
           isOpen={this.state.popoverOpen}
           toggle={this.togglePopover}
           placement="bottom-end"
@@ -271,15 +287,41 @@ class ColumnSize extends Component {
               name: 'flip',
               options: {
                 boundary: 'viewport',
+                fallbackPlacements: ['top-end', 'bottom-start', 'top-start'],
               },
             },
           ]}
         >
-          <PopoverHeader>Grid Layout</PopoverHeader>
+          <PopoverHeader style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>Grid Layout</span>
+            <button
+              type="button"
+              className="close"
+              onClick={this.togglePopover}
+              aria-label="Close"
+              ref={(el) => { this.closeBtnRef = el; }}
+              style={{
+                border: 0,
+                background: 'transparent',
+                opacity: 0.5,
+                cursor: 'pointer',
+                fontSize: '1.25rem',
+                fontWeight: '700',
+                lineHeight: '1',
+                color: '#000',
+                padding: '0',
+                marginLeft: 'auto'
+              }}
+            >
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </PopoverHeader>
           <PopoverBody
             onKeyDown={this.handlePopoverKeyDown}
             onKeyUp={(e) => e.stopPropagation()}
             onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-label="Grid Layout Settings"
           >
             <div className="form-group grid-popover-form">
               <div className="mb-2">

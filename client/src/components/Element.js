@@ -270,6 +270,8 @@ const Element = (props) => {
           activeTab={activeTab}
           disableTooltip={isDragging}
           onDragEnd={onDragEnd}
+          currentSize={props.currentSize}
+          currentOffset={props.currentOffset}
         />
 
         {
@@ -346,6 +348,8 @@ Element.propTypes = {
   type: elementTypeType.isRequired,
   areaId: PropTypes.number.isRequired,
   link: PropTypes.string.isRequired,
+  currentSize: PropTypes.number,
+  currentOffset: PropTypes.number,
   // Redux mapped props:
   activeTab: PropTypes.string,
   tabSetName: PropTypes.string,

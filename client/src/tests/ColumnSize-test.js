@@ -169,7 +169,7 @@ describe('ColumnSize - State Management', () => {
   test('handleChangeSize updates state and select value', () => {
     const { getByRole, getByLabelText } = render(<ColumnSize {...defaultProps} />);
     // Open popover
-    fireEvent.click(getByRole('button'));
+    fireEvent.click(getByRole('button', { name: 'Grid Layout Settings' }));
     const select = getByLabelText(/Size/i);
     fireEvent.change(select, { target: { value: '4' } });
     expect(select.value).toBe('4');
@@ -178,7 +178,7 @@ describe('ColumnSize - State Management', () => {
   test('handleChangeOffset updates state and select value', () => {
     const { getByRole, getByLabelText } = render(<ColumnSize {...defaultProps} />);
     // Open popover
-    fireEvent.click(getByRole('button'));
+    fireEvent.click(getByRole('button', { name: 'Grid Layout Settings' }));
     const select = getByLabelText(/Offset/i);
     fireEvent.change(select, { target: { value: '3' } });
     expect(select.value).toBe('3');
@@ -230,11 +230,11 @@ describe('ColumnSize - State Management', () => {
     expect(queryByTestId('popover')).toBeNull();
     
     // Toggle to open
-    fireEvent.click(getByRole('button'));
+    fireEvent.click(getByRole('button', { name: 'Grid Layout Settings' }));
     expect(queryByTestId('popover')).not.toBeNull();
     
     // Toggle to close
-    fireEvent.click(getByRole('button'));
+    fireEvent.click(getByRole('button', { name: 'Grid Layout Settings' }));
     expect(queryByTestId('popover')).toBeNull();
   });
 });
@@ -300,7 +300,7 @@ describe('ColumnSize - Keyboard Handling', () => {
   test('Escape key closes popover', () => {
     const { getByRole, queryByTestId, getByLabelText } = render(<ColumnSize {...defaultProps} />);
     // Open popover
-    fireEvent.click(getByRole('button'));
+    fireEvent.click(getByRole('button', { name: 'Grid Layout Settings' }));
     expect(queryByTestId('popover')).not.toBeNull();
     
     // Trigger Escape key
@@ -312,7 +312,7 @@ describe('ColumnSize - Keyboard Handling', () => {
   test('non-Escape keys do not close popover', () => {
     const { getByRole, queryByTestId, getByLabelText } = render(<ColumnSize {...defaultProps} />);
     // Open popover
-    fireEvent.click(getByRole('button'));
+    fireEvent.click(getByRole('button', { name: 'Grid Layout Settings' }));
     expect(queryByTestId('popover')).not.toBeNull();
     
     // Keydown non-escape

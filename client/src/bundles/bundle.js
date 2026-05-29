@@ -110,7 +110,11 @@ const withGridFunctionality = (OriginalElement) => {
       }
     }, [element.id, shouldBeRowElement, hasGridSchema, currentSize, currentOffset]);
 
-    const originalElement = React.createElement(OriginalElement, props);
+    const originalElement = React.createElement(OriginalElement, {
+      ...props,
+      currentSize,
+      currentOffset,
+    });
 
     // Create grid controls for non-row elements
     if (shouldHaveGridControls && ColumnSizeComponent) {
