@@ -704,7 +704,7 @@ var elementTypeType = exports.elementTypeType = _propTypes["default"].shape({
   name: _propTypes["default"].string,
   title: _propTypes["default"].string,
   icon: _propTypes["default"].string,
-  inlineEditable: _propTypes["default"]["boolean"],
+  inlineEditable: _propTypes["default"].bool,
   editTabs: _propTypes["default"].arrayOf(_propTypes["default"].shape({
     title: _propTypes["default"].string,
     name: _propTypes["default"].string
@@ -7520,6 +7520,7 @@ module.exports = Reactstrap;
 var __webpack_exports__ = {};
 // This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
 (() => {
+var exports = __webpack_exports__;
 /*!**************************************!*\
   !*** ./client/src/bundles/bundle.js ***!
   \**************************************/
@@ -7532,6 +7533,11 @@ __webpack_require__(/*! core-js/modules/es.array.slice.js */ "./node_modules/cor
 __webpack_require__(/*! core-js/modules/es.date.to-string.js */ "./node_modules/core-js/modules/es.date.to-string.js");
 __webpack_require__(/*! core-js/modules/es.regexp.to-string.js */ "./node_modules/core-js/modules/es.regexp.to-string.js");
 __webpack_require__(/*! core-js/modules/es.array.from.js */ "./node_modules/core-js/modules/es.array.from.js");
+__webpack_require__(/*! core-js/modules/es.object.define-property.js */ "./node_modules/core-js/modules/es.object.define-property.js");
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.withGridFunctionality = void 0;
 __webpack_require__(/*! core-js/modules/es.array.iterator.js */ "./node_modules/core-js/modules/es.array.iterator.js");
 __webpack_require__(/*! core-js/modules/es.object.to-string.js */ "./node_modules/core-js/modules/es.object.to-string.js");
 __webpack_require__(/*! core-js/modules/es.string.iterator.js */ "./node_modules/core-js/modules/es.string.iterator.js");
@@ -7597,7 +7603,7 @@ var GridControlsPortal = function GridControlsPortal(_ref) {
   return (0, _reactDom.createPortal)(children, target);
 };
 var enhancedComponentCache = new WeakMap();
-var withGridFunctionality = function withGridFunctionality(OriginalElement) {
+var withGridFunctionality = exports.withGridFunctionality = function withGridFunctionality(OriginalElement) {
   if (enhancedComponentCache.has(OriginalElement)) {
     return enhancedComponentCache.get(OriginalElement);
   }
@@ -7678,7 +7684,7 @@ var withGridFunctionality = function withGridFunctionality(OriginalElement) {
       }, gridComponent);
       return _react["default"].createElement(_react["default"].Fragment, {
         key: "grid-fragment-".concat(element.id)
-      }, [originalElement, portalComponent]);
+      }, originalElement, portalComponent);
     }
     return originalElement;
   };

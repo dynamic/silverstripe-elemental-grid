@@ -145,10 +145,12 @@ const withGridFunctionality = (OriginalElement) => {
         key: `grid-portal-${element.id}`,
       }, gridComponent);
 
-      return React.createElement(React.Fragment, { key: `grid-fragment-${element.id}` }, [
+      return React.createElement(
+        React.Fragment,
+        { key: `grid-fragment-${element.id}` },
         originalElement,
-        portalComponent,
-      ]);
+        portalComponent
+      );
     }
 
     return originalElement;
@@ -349,3 +351,6 @@ window.document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
+
+export { withGridFunctionality };
+
