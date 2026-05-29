@@ -1,6 +1,7 @@
 /*!*****************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[0].use[1]!./node_modules/postcss-loader/dist/cjs.js??ruleSet[1].rules[0].use[2]!./node_modules/resolve-url-loader/index.js??ruleSet[1].rules[0].use[3]!./node_modules/sass-loader/dist/cjs.js??ruleSet[1].rules[0].use[4]!./client/src/styles/bundle.scss ***!
   \*****************************************************************************************************************************************************************************************************************************************************************************************************************************/
+@charset "UTF-8";
 /* Bootstrap Grid Implementation for CMS Visual Feedback */
 /* Make .elemental-editor-list a flex container (Bootstrap row) */
 .elemental-editor-list {
@@ -504,56 +505,9 @@
   margin-left: calc(min(100%, 960px) * (11 / 12)) !important;
 }
 
-/* Centering columns at the very start of the list when they are contained (default virtual grid) */
-.elemental-editor-list > .element-editor__element:first-child:not(.is-row),
-.elemental-editor-list > .element-editor__hover-bar:first-child + .element-editor__element:not(.is-row) {
-  margin-left: calc((100% - min(100%, 960px)) / 2) !important;
-}
-.elemental-editor-list > .element-editor__element:first-child:not(.is-row).offset-lg-1,
-.elemental-editor-list > .element-editor__hover-bar:first-child + .element-editor__element:not(.is-row).offset-lg-1 {
-  margin-left: calc((100% - min(100%, 960px)) / 2 + min(100%, 960px) * (1 / 12)) !important;
-}
-.elemental-editor-list > .element-editor__element:first-child:not(.is-row).offset-lg-2,
-.elemental-editor-list > .element-editor__hover-bar:first-child + .element-editor__element:not(.is-row).offset-lg-2 {
-  margin-left: calc((100% - min(100%, 960px)) / 2 + min(100%, 960px) * (2 / 12)) !important;
-}
-.elemental-editor-list > .element-editor__element:first-child:not(.is-row).offset-lg-3,
-.elemental-editor-list > .element-editor__hover-bar:first-child + .element-editor__element:not(.is-row).offset-lg-3 {
-  margin-left: calc((100% - min(100%, 960px)) / 2 + min(100%, 960px) * (3 / 12)) !important;
-}
-.elemental-editor-list > .element-editor__element:first-child:not(.is-row).offset-lg-4,
-.elemental-editor-list > .element-editor__hover-bar:first-child + .element-editor__element:not(.is-row).offset-lg-4 {
-  margin-left: calc((100% - min(100%, 960px)) / 2 + min(100%, 960px) * (4 / 12)) !important;
-}
-.elemental-editor-list > .element-editor__element:first-child:not(.is-row).offset-lg-5,
-.elemental-editor-list > .element-editor__hover-bar:first-child + .element-editor__element:not(.is-row).offset-lg-5 {
-  margin-left: calc((100% - min(100%, 960px)) / 2 + min(100%, 960px) * (5 / 12)) !important;
-}
-.elemental-editor-list > .element-editor__element:first-child:not(.is-row).offset-lg-6,
-.elemental-editor-list > .element-editor__hover-bar:first-child + .element-editor__element:not(.is-row).offset-lg-6 {
-  margin-left: calc((100% - min(100%, 960px)) / 2 + min(100%, 960px) * (6 / 12)) !important;
-}
-.elemental-editor-list > .element-editor__element:first-child:not(.is-row).offset-lg-7,
-.elemental-editor-list > .element-editor__hover-bar:first-child + .element-editor__element:not(.is-row).offset-lg-7 {
-  margin-left: calc((100% - min(100%, 960px)) / 2 + min(100%, 960px) * (7 / 12)) !important;
-}
-.elemental-editor-list > .element-editor__element:first-child:not(.is-row).offset-lg-8,
-.elemental-editor-list > .element-editor__hover-bar:first-child + .element-editor__element:not(.is-row).offset-lg-8 {
-  margin-left: calc((100% - min(100%, 960px)) / 2 + min(100%, 960px) * (8 / 12)) !important;
-}
-.elemental-editor-list > .element-editor__element:first-child:not(.is-row).offset-lg-9,
-.elemental-editor-list > .element-editor__hover-bar:first-child + .element-editor__element:not(.is-row).offset-lg-9 {
-  margin-left: calc((100% - min(100%, 960px)) / 2 + min(100%, 960px) * (9 / 12)) !important;
-}
-.elemental-editor-list > .element-editor__element:first-child:not(.is-row).offset-lg-10,
-.elemental-editor-list > .element-editor__hover-bar:first-child + .element-editor__element:not(.is-row).offset-lg-10 {
-  margin-left: calc((100% - min(100%, 960px)) / 2 + min(100%, 960px) * (10 / 12)) !important;
-}
-.elemental-editor-list > .element-editor__element:first-child:not(.is-row).offset-lg-11,
-.elemental-editor-list > .element-editor__hover-bar:first-child + .element-editor__element:not(.is-row).offset-lg-11 {
-  margin-left: calc((100% - min(100%, 960px)) / 2 + min(100%, 960px) * (11 / 12)) !important;
-}
-
+/* Centering is now handled dynamically by centerContainedElements() in bundle.js.
+   The JS function detects visual flex row breaks and applies centering margin-left
+   to the first element on each new line within a contained section. */
 /* 2. Fluid Layout Breakout (Encountered a Fluid Row) */
 .elemental-editor-list:has(.is-fluid-row) {
   /* Bleed out to fill the absolute edge of the CMS split pane */
@@ -577,56 +531,7 @@
   margin-right: auto !important;
 }
 
-/* Align the first column immediately following a contained row to the centered container */
-.element-editor__element.is-contained-row + .element-editor__element:not(.is-row),
-.element-editor__element.is-contained-row + .element-editor__hover-bar + .element-editor__element:not(.is-row) {
-  margin-left: calc((100% - min(100%, 960px)) / 2) !important;
-}
-.element-editor__element.is-contained-row + .element-editor__element:not(.is-row).offset-lg-1,
-.element-editor__element.is-contained-row + .element-editor__hover-bar + .element-editor__element:not(.is-row).offset-lg-1 {
-  margin-left: calc((100% - min(100%, 960px)) / 2 + min(100%, 960px) * (1 / 12)) !important;
-}
-.element-editor__element.is-contained-row + .element-editor__element:not(.is-row).offset-lg-2,
-.element-editor__element.is-contained-row + .element-editor__hover-bar + .element-editor__element:not(.is-row).offset-lg-2 {
-  margin-left: calc((100% - min(100%, 960px)) / 2 + min(100%, 960px) * (2 / 12)) !important;
-}
-.element-editor__element.is-contained-row + .element-editor__element:not(.is-row).offset-lg-3,
-.element-editor__element.is-contained-row + .element-editor__hover-bar + .element-editor__element:not(.is-row).offset-lg-3 {
-  margin-left: calc((100% - min(100%, 960px)) / 2 + min(100%, 960px) * (3 / 12)) !important;
-}
-.element-editor__element.is-contained-row + .element-editor__element:not(.is-row).offset-lg-4,
-.element-editor__element.is-contained-row + .element-editor__hover-bar + .element-editor__element:not(.is-row).offset-lg-4 {
-  margin-left: calc((100% - min(100%, 960px)) / 2 + min(100%, 960px) * (4 / 12)) !important;
-}
-.element-editor__element.is-contained-row + .element-editor__element:not(.is-row).offset-lg-5,
-.element-editor__element.is-contained-row + .element-editor__hover-bar + .element-editor__element:not(.is-row).offset-lg-5 {
-  margin-left: calc((100% - min(100%, 960px)) / 2 + min(100%, 960px) * (5 / 12)) !important;
-}
-.element-editor__element.is-contained-row + .element-editor__element:not(.is-row).offset-lg-6,
-.element-editor__element.is-contained-row + .element-editor__hover-bar + .element-editor__element:not(.is-row).offset-lg-6 {
-  margin-left: calc((100% - min(100%, 960px)) / 2 + min(100%, 960px) * (6 / 12)) !important;
-}
-.element-editor__element.is-contained-row + .element-editor__element:not(.is-row).offset-lg-7,
-.element-editor__element.is-contained-row + .element-editor__hover-bar + .element-editor__element:not(.is-row).offset-lg-7 {
-  margin-left: calc((100% - min(100%, 960px)) / 2 + min(100%, 960px) * (7 / 12)) !important;
-}
-.element-editor__element.is-contained-row + .element-editor__element:not(.is-row).offset-lg-8,
-.element-editor__element.is-contained-row + .element-editor__hover-bar + .element-editor__element:not(.is-row).offset-lg-8 {
-  margin-left: calc((100% - min(100%, 960px)) / 2 + min(100%, 960px) * (8 / 12)) !important;
-}
-.element-editor__element.is-contained-row + .element-editor__element:not(.is-row).offset-lg-9,
-.element-editor__element.is-contained-row + .element-editor__hover-bar + .element-editor__element:not(.is-row).offset-lg-9 {
-  margin-left: calc((100% - min(100%, 960px)) / 2 + min(100%, 960px) * (9 / 12)) !important;
-}
-.element-editor__element.is-contained-row + .element-editor__element:not(.is-row).offset-lg-10,
-.element-editor__element.is-contained-row + .element-editor__hover-bar + .element-editor__element:not(.is-row).offset-lg-10 {
-  margin-left: calc((100% - min(100%, 960px)) / 2 + min(100%, 960px) * (10 / 12)) !important;
-}
-.element-editor__element.is-contained-row + .element-editor__element:not(.is-row).offset-lg-11,
-.element-editor__element.is-contained-row + .element-editor__hover-bar + .element-editor__element:not(.is-row).offset-lg-11 {
-  margin-left: calc((100% - min(100%, 960px)) / 2 + min(100%, 960px) * (11 / 12)) !important;
-}
-
+/* Adjacent-sibling centering removed — handled by centerContainedElements() in JS */
 /* 3. Alternating Sibling Selector Engine */
 /* We alternate selectors up to 6 depths to ensure the closest row type controls the sibling columns' width */
 .is-fluid-row ~ .element-editor__element:not(.is-row).col-lg-1 {

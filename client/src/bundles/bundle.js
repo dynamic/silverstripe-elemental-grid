@@ -160,10 +160,93 @@ const withGridFunctionality = (OriginalElement) => {
   return GridEnhancedElement;
 };
 
+// Center contained elements that start a new visual flex row.
+// CSS can only center the first element after a contained row via the adjacent sibling
+// selector (+). Elements that wrap to a new flex line don't get the centering margin.
+// This function detects visual row breaks and applies the margin dynamically.
+const centerContainedElements = () => {
+  const list = document.querySelector('.elemental-editor-list');
+  if (!list || list.classList.contains('dragging-active')) return;
+
+  const listWidth = list.offsetWidth;
+  const maxContained = Math.min(listWidth, 960);
+  const centeringMargin = (listWidth - maxContained) / 2;
+
+  // Walk through all direct children in DOM order, tracking contained/fluid state
+  let inContainedSection = true; // default (before any row) is contained
+  let accumulatedWidth = 0;
+
+  const children = list.children;
+  for (let i = 0; i < children.length; i++) {
+    const el = children[i];
+    if (!el.classList.contains('element-editor__element')) continue;
+
+    // Row elements toggle the section mode
+    if (el.classList.contains('is-row')) {
+      if (el.classList.contains('is-fluid-row')) {
+        inContainedSection = false;
+      } else {
+        inContainedSection = true;
+      }
+      accumulatedWidth = 0;
+      el.style.removeProperty('margin-left');
+      // Re-apply auto centering for contained rows
+      if (el.classList.contains('is-contained-row')) {
+        el.style.marginLeft = 'auto';
+        el.style.marginRight = 'auto';
+      }
+      continue;
+    }
+
+    // Non-row element in a fluid section: no centering needed
+    if (!inContainedSection) {
+      el.classList.remove('grid-centered');
+      // Don't clear margin-left since offset classes may set it
+      if (!el.className.match(/\boffset-lg-\d+\b/)) {
+        el.style.removeProperty('margin-left');
+      }
+      accumulatedWidth += el.offsetWidth;
+      continue;
+    }
+
+    // Non-row element in a contained section:
+    // Determine if this element starts a new visual row
+    const elWidth = el.offsetWidth;
+
+    if (accumulatedWidth === 0 || (accumulatedWidth + elWidth) > maxContained + 1) {
+      // First element on a new visual row within a contained section
+      // Apply centering margin
+      el.classList.add('grid-centered');
+
+      // Check for offset class to add on top of centering
+      const offsetMatch = el.className.match(/\boffset-lg-(\d+)\b/);
+      if (offsetMatch) {
+        const offsetCols = parseInt(offsetMatch[1], 10);
+        const offsetPx = maxContained * (offsetCols / 12);
+        el.style.marginLeft = `${centeringMargin + offsetPx}px`;
+      } else {
+        el.style.marginLeft = `${centeringMargin}px`;
+      }
+      accumulatedWidth = elWidth;
+    } else {
+      // Continuation element on the same visual row
+      el.classList.remove('grid-centered');
+      if (!el.className.match(/\boffset-lg-\d+\b/)) {
+        el.style.removeProperty('margin-left');
+      }
+      accumulatedWidth += elWidth;
+    }
+  }
+};
+window.centerContainedElements = centerContainedElements;
+
 // Calculate and update positioning for all block insertion hover bars
 const positionHoverBars = () => {
   const list = document.querySelector('.elemental-editor-list');
   if (!list || list.classList.contains('dragging-active')) return;
+
+  // Center contained elements first, then position hover bars
+  centerContainedElements();
 
   const holders = list.querySelectorAll('.element-editor__element');
   holders.forEach(holder => {

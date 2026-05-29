@@ -495,17 +495,9 @@
   }
 }
 
-/* Centering columns at the very start of the list when they are contained (default virtual grid) */
-.elemental-editor-list > .element-editor__element:first-child:not(.is-row),
-.elemental-editor-list > .element-editor__hover-bar:first-child + .element-editor__element:not(.is-row) {
-  margin-left: calc((100% - min(100%, 960px)) / 2) !important;
-
-  @for $i from 1 through 11 {
-    &.offset-lg-#{$i} {
-      margin-left: calc((100% - min(100%, 960px)) / 2 + min(100%, 960px) * (#{$i} / 12)) !important;
-    }
-  }
-}
+/* Centering is now handled dynamically by centerContainedElements() in bundle.js.
+   The JS function detects visual flex row breaks and applies centering margin-left
+   to the first element on each new line within a contained section. */
 
 /* 2. Fluid Layout Breakout (Encountered a Fluid Row) */
 .elemental-editor-list:has(.is-fluid-row) {
@@ -530,17 +522,7 @@
   margin-right: auto !important;
 }
 
-/* Align the first column immediately following a contained row to the centered container */
-.element-editor__element.is-contained-row + .element-editor__element:not(.is-row),
-.element-editor__element.is-contained-row + .element-editor__hover-bar + .element-editor__element:not(.is-row) {
-  margin-left: calc((100% - min(100%, 960px)) / 2) !important;
-
-  @for $i from 1 through 11 {
-    &.offset-lg-#{$i} {
-      margin-left: calc((100% - min(100%, 960px)) / 2 + min(100%, 960px) * (#{$i} / 12)) !important;
-    }
-  }
-}
+/* Adjacent-sibling centering removed — handled by centerContainedElements() in JS */
 
 /* 3. Alternating Sibling Selector Engine */
 /* We alternate selectors up to 6 depths to ensure the closest row type controls the sibling columns' width */

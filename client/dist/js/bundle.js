@@ -6483,6 +6483,64 @@ defineIterator(String, 'String', function (iterated) {
 
 /***/ }),
 
+/***/ "./node_modules/core-js/modules/es.string.match.js":
+/*!*********************************************************!*\
+  !*** ./node_modules/core-js/modules/es.string.match.js ***!
+  \*********************************************************/
+/***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
+
+
+var call = __webpack_require__(/*! ../internals/function-call */ "./node_modules/core-js/internals/function-call.js");
+var fixRegExpWellKnownSymbolLogic = __webpack_require__(/*! ../internals/fix-regexp-well-known-symbol-logic */ "./node_modules/core-js/internals/fix-regexp-well-known-symbol-logic.js");
+var anObject = __webpack_require__(/*! ../internals/an-object */ "./node_modules/core-js/internals/an-object.js");
+var isNullOrUndefined = __webpack_require__(/*! ../internals/is-null-or-undefined */ "./node_modules/core-js/internals/is-null-or-undefined.js");
+var toLength = __webpack_require__(/*! ../internals/to-length */ "./node_modules/core-js/internals/to-length.js");
+var toString = __webpack_require__(/*! ../internals/to-string */ "./node_modules/core-js/internals/to-string.js");
+var requireObjectCoercible = __webpack_require__(/*! ../internals/require-object-coercible */ "./node_modules/core-js/internals/require-object-coercible.js");
+var getMethod = __webpack_require__(/*! ../internals/get-method */ "./node_modules/core-js/internals/get-method.js");
+var advanceStringIndex = __webpack_require__(/*! ../internals/advance-string-index */ "./node_modules/core-js/internals/advance-string-index.js");
+var regExpExec = __webpack_require__(/*! ../internals/regexp-exec-abstract */ "./node_modules/core-js/internals/regexp-exec-abstract.js");
+
+// @@match logic
+fixRegExpWellKnownSymbolLogic('match', function (MATCH, nativeMatch, maybeCallNative) {
+  return [
+    // `String.prototype.match` method
+    // https://tc39.es/ecma262/#sec-string.prototype.match
+    function match(regexp) {
+      var O = requireObjectCoercible(this);
+      var matcher = isNullOrUndefined(regexp) ? undefined : getMethod(regexp, MATCH);
+      return matcher ? call(matcher, regexp, O) : new RegExp(regexp)[MATCH](toString(O));
+    },
+    // `RegExp.prototype[@@match]` method
+    // https://tc39.es/ecma262/#sec-regexp.prototype-@@match
+    function (string) {
+      var rx = anObject(this);
+      var S = toString(string);
+      var res = maybeCallNative(nativeMatch, rx, S);
+
+      if (res.done) return res.value;
+
+      if (!rx.global) return regExpExec(rx, S);
+
+      var fullUnicode = rx.unicode;
+      rx.lastIndex = 0;
+      var A = [];
+      var n = 0;
+      var result;
+      while ((result = regExpExec(rx, S)) !== null) {
+        var matchStr = toString(result[0]);
+        A[n] = matchStr;
+        if (matchStr === '') rx.lastIndex = advanceStringIndex(S, toLength(rx.lastIndex), fullUnicode);
+        n++;
+      }
+      return n === 0 ? null : A;
+    }
+  ];
+});
+
+
+/***/ }),
+
 /***/ "./node_modules/core-js/modules/es.string.replace.js":
 /*!***********************************************************!*\
   !*** ./node_modules/core-js/modules/es.string.replace.js ***!
@@ -7484,6 +7542,8 @@ __webpack_require__(/*! core-js/modules/es.string.includes.js */ "./node_modules
 __webpack_require__(/*! core-js/modules/es.regexp.exec.js */ "./node_modules/core-js/modules/es.regexp.exec.js");
 __webpack_require__(/*! core-js/modules/es.string.replace.js */ "./node_modules/core-js/modules/es.string.replace.js");
 __webpack_require__(/*! core-js/modules/es.function.name.js */ "./node_modules/core-js/modules/es.function.name.js");
+__webpack_require__(/*! core-js/modules/es.string.match.js */ "./node_modules/core-js/modules/es.string.match.js");
+__webpack_require__(/*! core-js/modules/es.parse-int.js */ "./node_modules/core-js/modules/es.parse-int.js");
 __webpack_require__(/*! core-js/modules/es.array.for-each.js */ "./node_modules/core-js/modules/es.array.for-each.js");
 __webpack_require__(/*! core-js/modules/web.dom-collections.for-each.js */ "./node_modules/core-js/modules/web.dom-collections.for-each.js");
 __webpack_require__(/*! core-js/modules/web.timers.js */ "./node_modules/core-js/modules/web.timers.js");
@@ -7626,9 +7686,66 @@ var withGridFunctionality = function withGridFunctionality(OriginalElement) {
   enhancedComponentCache.set(OriginalElement, GridEnhancedElement);
   return GridEnhancedElement;
 };
+var centerContainedElements = function centerContainedElements() {
+  var list = document.querySelector('.elemental-editor-list');
+  if (!list || list.classList.contains('dragging-active')) return;
+  var listWidth = list.offsetWidth;
+  var maxContained = Math.min(listWidth, 960);
+  var centeringMargin = (listWidth - maxContained) / 2;
+  var inContainedSection = true;
+  var accumulatedWidth = 0;
+  var children = list.children;
+  for (var i = 0; i < children.length; i++) {
+    var el = children[i];
+    if (!el.classList.contains('element-editor__element')) continue;
+    if (el.classList.contains('is-row')) {
+      if (el.classList.contains('is-fluid-row')) {
+        inContainedSection = false;
+      } else {
+        inContainedSection = true;
+      }
+      accumulatedWidth = 0;
+      el.style.removeProperty('margin-left');
+      if (el.classList.contains('is-contained-row')) {
+        el.style.marginLeft = 'auto';
+        el.style.marginRight = 'auto';
+      }
+      continue;
+    }
+    if (!inContainedSection) {
+      el.classList.remove('grid-centered');
+      if (!el.className.match(/\boffset-lg-\d+\b/)) {
+        el.style.removeProperty('margin-left');
+      }
+      accumulatedWidth += el.offsetWidth;
+      continue;
+    }
+    var elWidth = el.offsetWidth;
+    if (accumulatedWidth === 0 || accumulatedWidth + elWidth > maxContained + 1) {
+      el.classList.add('grid-centered');
+      var offsetMatch = el.className.match(/\boffset-lg-(\d+)\b/);
+      if (offsetMatch) {
+        var offsetCols = parseInt(offsetMatch[1], 10);
+        var offsetPx = maxContained * (offsetCols / 12);
+        el.style.marginLeft = "".concat(centeringMargin + offsetPx, "px");
+      } else {
+        el.style.marginLeft = "".concat(centeringMargin, "px");
+      }
+      accumulatedWidth = elWidth;
+    } else {
+      el.classList.remove('grid-centered');
+      if (!el.className.match(/\boffset-lg-\d+\b/)) {
+        el.style.removeProperty('margin-left');
+      }
+      accumulatedWidth += elWidth;
+    }
+  }
+};
+window.centerContainedElements = centerContainedElements;
 var positionHoverBars = function positionHoverBars() {
   var list = document.querySelector('.elemental-editor-list');
   if (!list || list.classList.contains('dragging-active')) return;
+  centerContainedElements();
   var holders = list.querySelectorAll('.element-editor__element');
   holders.forEach(function (holder) {
     var hoverBar = holder.nextElementSibling;
