@@ -286,6 +286,7 @@
     .element-editor__hover-bar-line {
       width: 4px !important;
       height: 100% !important;
+      max-height: none !important;
       background-color: #005ae1;
       opacity: 0;
       transition: all 0.2s ease-in-out;
