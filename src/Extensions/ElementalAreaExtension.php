@@ -3,13 +3,13 @@
 namespace WeDevelop\ElementalGrid\Extensions;
 
 use Psr\Log\LoggerInterface;
+use SilverStripe\Core\Extension;
 use SilverStripe\Core\Injector\Injector;
-use SilverStripe\ORM\ArrayList;
-use SilverStripe\ORM\DataExtension;
+use SilverStripe\Model\List\ArrayList;
 use WeDevelop\ElementalGrid\Controllers\ElementRowController;
 use WeDevelop\ElementalGrid\Models\ElementRow;
 
-class ElementalAreaExtension extends DataExtension
+class ElementalAreaExtension extends Extension
 {
     private ArrayList $controllers;
 

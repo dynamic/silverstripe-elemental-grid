@@ -18,7 +18,7 @@ use SilverStripe\Forms\OptionsetField;
 use SilverStripe\Forms\ReadonlyField;
 use SilverStripe\Forms\Tab;
 use SilverStripe\Forms\TextField;
-use SilverStripe\ORM\DataExtension;
+use SilverStripe\Core\Extension;
 use UncleCheese\DisplayLogic\Forms\Wrapper;
 use WeDevelop\ElementalGrid\CSSFramework\CSSFrameworkInterface;
 use WeDevelop\ElementalGrid\CSSFramework\TailwindCSSFramework;
@@ -29,7 +29,7 @@ use WeDevelop\MediaField\Form\MediaField;
  * @method Image MediaImage()
  * @property ElementContent|ElementContentExtension $owner
  */
-final class ElementContentExtension extends DataExtension
+final class ElementContentExtension extends Extension
 {
     use Configurable;
 
@@ -188,8 +188,6 @@ final class ElementContentExtension extends DataExtension
 
     public function onBeforeWrite(): void
     {
-        parent::onBeforeWrite();
-
         if ($this->getOwner()->MediaType === MediaField::TYPE_VIDEO && $this->getOwner()->MediaVideoFullURL) {
             $this->getOwner()->MediaVideoFullURL = trim($this->getOwner()->MediaVideoFullURL);
             MediaField::saveEmbed($this->getOwner());

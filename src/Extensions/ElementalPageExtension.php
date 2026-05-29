@@ -2,13 +2,13 @@
 
 namespace WeDevelop\ElementalGrid\Extensions;
 
+use SilverStripe\Core\Extension;
 use SilverStripe\Forms\CheckboxField;
 use SilverStripe\Forms\FieldList;
-use SilverStripe\ORM\DataExtension;
 use DNADesign\Elemental\Models\BaseElement;
 use DNADesign\Elemental\Models\ElementalArea;
 
-class ElementalPageExtension extends DataExtension
+class ElementalPageExtension extends Extension
 {
     private static bool $elemental_keep_content_field = true;
 

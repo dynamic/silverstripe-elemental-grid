@@ -3,19 +3,19 @@
 namespace WeDevelop\ElementalGrid\Extensions;
 
 use SilverStripe\Core\ClassInfo;
+use SilverStripe\Core\Extension;
 use SilverStripe\Forms\CheckboxField;
 use SilverStripe\Forms\DropdownField;
 use SilverStripe\Forms\FieldGroup;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\Forms\HeaderField;
 use SilverStripe\Forms\TextField;
-use SilverStripe\ORM\DataExtension;
 use WeDevelop\ElementalGrid\CSSFramework\CSSFrameworkInterface;
 use WeDevelop\ElementalGrid\CSSFramework\TailwindCSSFramework;
 use WeDevelop\ElementalGrid\Models\ElementRow;
 use WeDevelop\ElementalGrid\ElementalConfig;
 
-class BaseElementExtension extends DataExtension
+class BaseElementExtension extends Extension
 {
     private static bool $inline_editable = false;
 
@@ -233,6 +233,7 @@ class BaseElementExtension extends DataExtension
 
         $blockSchema['grid'] = [
             'isRow' => $this->owner->ClassName === ElementRow::class,
+            'isFluid' => $this->owner->ClassName === ElementRow::class ? (bool)$this->owner->IsFluid : false,
             'gridColumns' => ElementalConfig::getGridColumnCount(),
             'column' => [
                 'defaultViewport' => ElementalConfig::getDefaultViewport(),
@@ -251,8 +252,30 @@ class BaseElementExtension extends DataExtension
             $columns[0] = $defaultValue;
         }
 
-        for ($i = 1; $i < ElementalConfig::getGridColumnCount() + 1; $i++) {
-            $columns[$i] = sprintf('%s %u/%u', _t(__CLASS__ . '.COLUMN', 'Column'), $i, ElementalConfig::getGridColumnCount());
+        $total = ElementalConfig::getGridColumnCount();
+
+        for ($i = 1; $i <= $total; $i++) {
+            $percentage = round(($i / $total) * 100);
+            
+            // Common fractions for 12-column grid
+            $fraction = '';
+            if ($total === 12) {
+                if ($i === 3) {
+                    $fraction = ' - 1/4';
+                } elseif ($i === 4) {
+                    $fraction = ' - 1/3';
+                } elseif ($i === 6) {
+                    $fraction = ' - 1/2';
+                } elseif ($i === 8) {
+                    $fraction = ' - 2/3';
+                } elseif ($i === 9) {
+                    $fraction = ' - 3/4';
+                } elseif ($i === 12) {
+                    $fraction = ' - Full';
+                }
+            }
+            
+            $columns[$i] = sprintf('%u/%u (%u%%%s)', $i, $total, $percentage, $fraction);
         }
 
         return $columns;

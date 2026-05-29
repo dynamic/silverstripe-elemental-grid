@@ -1,11 +1,11 @@
+import getFormState from 'lib/getFormState';
+import { inject } from 'lib/Injector';
+import i18n from 'i18n';
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { getEmptyImage } from 'react-dnd-html5-backend';
-import getFormState from 'lib/getFormState';
 import { compose } from 'redux';
 import { connect } from 'react-redux';
-import { inject } from 'lib/Injector';
-import i18n from 'i18n';
 import classNames from 'classnames';
 import { isDirty } from 'redux-form';
 import { DragSource } from 'react-dnd';
@@ -163,6 +163,34 @@ class Header extends Component {
 
     const blockIconId = `element-icon-${element.id}`;
 
+    const hasGridSchema = element && element.blockSchema && element.blockSchema.grid;
+    const isRow = hasGridSchema && element.blockSchema.grid.isRow;
+    const shouldBeRowElement = isRow ||
+      element.blockSchema.typeName === 'ElementRow' ||
+      element.blockSchema.typeName === 'WeDevelop\\ElementalGrid\\Models\\ElementRow' ||
+      (element.title && element.title.includes('Row')) ||
+      (element.blockSchema.title && element.blockSchema.title.includes('Row'));
+
+    const shouldHaveGridControls = !shouldBeRowElement && hasGridSchema;
+
+    let badge = null;
+    if (shouldHaveGridControls) {
+      const size = this.props.currentSize || (element.blockSchema.grid.column && element.blockSchema.grid.column.size) || 12;
+      const totalColumns = element.blockSchema.grid.gridColumns || 12;
+      badge = (
+        <span className="grid-size-badge" title={`${size} of ${totalColumns} columns`}>
+          {size}/{totalColumns}
+        </span>
+      );
+    } else if (shouldBeRowElement) {
+      const isFluid = hasGridSchema && element.blockSchema.grid.isFluid;
+      badge = (
+        <span className="grid-row-badge" title={isFluid ? 'Fluid row (full width)' : 'Contained row'}>
+          {isFluid ? '⬜ Full Width' : '⬛ Contained'}
+        </span>
+      );
+    }
+
     const content = (
       <div className={containerClasses}>
         <div className="element-editor-header__drag-handle">
@@ -173,7 +201,10 @@ class Header extends Component {
             <i className={type.icon} id={blockIconId} />
             {this.renderVersionedStateMessage()}
           </div>
-          <h3 className={titleClasses}>{title}</h3>
+          <h3 className={titleClasses}>
+            {title}
+            {badge}
+          </h3>
         </div>
         {!simple && <div className="element-editor-header__actions">
           <div role="none" onClick={(event) => event.stopPropagation()}>
@@ -213,6 +244,8 @@ Header.propTypes = {
   connectDragSource: PropTypes.func.isRequired,
   connectDragPreview: PropTypes.func.isRequired,
   onDragEnd: PropTypes.func, // eslint-disable-line react/no-unused-prop-types
+  currentSize: PropTypes.number,
+  currentOffset: PropTypes.number,
 };
 
 Header.defaultProps = {

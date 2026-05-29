@@ -6,7 +6,6 @@ use DNADesign\Elemental\Models\BaseElement;
 use SilverStripe\Forms\CheckboxField;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\Forms\TextField;
-use SilverStripe\GraphQL\Schema\Field\Field;
 use WeDevelop\ElementalGrid\Controllers\ElementRowController;
 use WeDevelop\ElementalGrid\Extensions\BaseElementExtension;
 

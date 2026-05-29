@@ -1,71 +1,60 @@
 /* global window */
 
-import React, { Component } from 'react';
-import PropTypes from 'prop-types';
-import { getEmptyImage } from 'react-dnd-html5-backend';
-import { DragSource, DropTarget } from 'react-dnd';
-import { compose } from 'redux';
 import { inject } from 'lib/Injector';
 import i18n from 'i18n';
+import * as TabsActions from 'state/tabs/TabsActions';
+import React, { useState } from 'react';
+import PropTypes from 'prop-types';
+import { compose } from 'redux';
 import classNames from 'classnames';
 import { connect } from 'react-redux';
-import * as TabsActions from 'state/tabs/TabsActions';
 import { loadElementFormStateName } from 'state/editor/loadElementFormStateName';
 import { loadElementSchemaValue } from 'state/editor/loadElementSchemaValue';
 import { elementTypeType } from 'types/elementTypeType';
 import { elementType } from 'types/elementType';
-import { elementDragSource, isOverTop } from 'lib/dragHelpers';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 /**
  * The Element component used in the context of an ElementEditor shows the summary
  * of an element's details when used in the CMS, including ID, Title and Summary.
  */
-class Element extends Component {
-  static getDerivedStateFromError() {
-    return { childRenderingError: true };
-  }
+const Element = (props) => {
+  // Safely access grid schema with fallbacks
+  const gridSchema = props.element && props.element.blockSchema && props.element.blockSchema.grid;
+  const columnData = (gridSchema && gridSchema.column) || {};
 
-  constructor(props) {
-    super(props);
+  const [previewExpanded, setPreviewExpanded] = useState(false);
+  const [initialTab, setInitialTab] = useState('');
+  const [loadingError, setLoadingError] = useState(false);
+  const [childRenderingError, setChildRenderingError] = useState(false);
 
-    this.handleKeyUp = this.handleKeyUp.bind(this);
-    this.handleExpand = this.handleExpand.bind(this);
-    this.handleLoadingError = this.handleLoadingError.bind(this);
-    this.handleTabClick = this.handleTabClick.bind(this);
-    this.updateFormTab = this.updateFormTab.bind(this);
-    this.handleChangeSize = this.handleChangeSize.bind(this);
-    this.handleChangeOffset = this.handleChangeOffset.bind(this);
 
-    this.state = {
-      previewExpanded: false,
-      initialTab: '',
-      loadingError: false,
-      childRenderingError: false,
-      size: props.element.blockSchema.grid.column.size,
-      offset: props.element.blockSchema.grid.column.offset,
-    };
-  }
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+    isOver,
+  } = useSortable({ 
+    id: props.element.id,
+    disabled: previewExpanded // Disable dragging when expanded
+  });
 
-  componentDidMount() {
-    const { connectDragPreview } = this.props;
-    if (connectDragPreview) {
-      // Use empty image as a drag preview so browsers don't draw it
-      // and we can draw whatever we want on the custom drag layer instead.
-      connectDragPreview(getEmptyImage(), {
-        // IE fallback: specify that we'd rather screenshot the node
-        // when it already knows it's being dragged so we can hide it with CSS.
-        captureDraggingState: true,
-      });
-    }
-  }
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
 
   /**
    * Returns the applicable versioned state class names for the element
    *
    * @returns {string}
    */
-  getVersionedStateClassName() {
-    const { element } = this.props;
+  const getVersionedStateClassName = () => {
+    const { element } = props;
 
     const baseClassName = 'element-editor__element';
 
@@ -78,7 +67,7 @@ class Element extends Component {
     }
 
     return `${baseClassName}--published`;
-  }
+  };
 
   /**
    * Returns the link title for this element
@@ -86,7 +75,7 @@ class Element extends Component {
    * @param {Object} type
    * @returns {string}
    */
-  getLinkTitle(type) {
+  const getLinkTitle = (type) => {
     if (type.broken) {
       return i18n._t('ElementalElement.ARCHIVE_BROKEN', 'Archive this block');
     }
@@ -94,16 +83,16 @@ class Element extends Component {
       i18n._t('ElementalElement.TITLE', 'Edit this {type} block'),
       { type: type.title }
     );
-  }
+  };
 
   /**
-   * Returns the summary for this elemen
+   * Returns the summary for this element
    *
    * @param {Object} element
    * @param {Object} type
    * @returns {string|JSX.Element}
    */
-  getSummary(element, type) {
+  const getSummary = (element, type) => {
     if (type.broken) {
       // Return a message about the broken block.
       return element.title ? i18n.inject(
@@ -119,43 +108,42 @@ class Element extends Component {
     }
     // Return the configured summary for this block.
     return element.blockSchema.content;
-  }
+  };
 
-  getColumnSizeClassNames() {
-    const { element } = this.props;
+  const getColumnSizeClassNames = () => {
+    const { element } = props;
+    const gridSchema = element && element.blockSchema && element.blockSchema.grid;
+    const columnData = (gridSchema && gridSchema.column) || {};
+    const cardSize = columnData.size || 12;
+    const cardOffset = columnData.offset || 0;
 
     return {
-      [`col-lg-${this.state.size}`]: true,
-      [`offset-lg-${this.state.offset}`]: true,
-      'is-row': element.blockSchema.grid.isRow === true,
-      'is-dragged-top': this.props.isDraggedOver && this.props.isDraggedOverPosition === 'top',
-      'is-dragged-bottom': this.props.isDraggedOver && this.props.isDraggedOverPosition === 'bottom'
+      [`col-lg-${cardSize}`]: true,
+      [`offset-lg-${cardOffset}`]: cardOffset > 0,
+      'is-row': gridSchema && gridSchema.isRow === true,
+      'is-dragged-top': props.isDraggedOver && props.isDraggedOverPosition === 'top',
+      'is-dragged-bottom': props.isDraggedOver && props.isDraggedOverPosition === 'bottom'
     };
-  }
+  };
 
   /**
    * Prevents the Element from being expanded in case a loading error occurred.
    * This gets triggered from the InlineEditForm component.
    */
-  handleLoadingError() {
-    this.setState({
-      loadingError: true
-    });
-  }
+  const handleLoadingError = () => {
+    setLoadingError(true);
+  };
 
   /**
    * Dispatcher to Tabs redux store for this element's tabset
    *
    * @param {string} activeTab Name prop of the active tab
    */
-  updateFormTab(activeTab) {
-    const { tabSetName, onActivateTab } = this.props;
-    const { initialTab } = this.state;
+  const updateFormTab = (activeTab) => {
+    const { tabSetName, onActivateTab } = props;
 
     if (!initialTab) {
-      this.setState({
-        initialTab: activeTab
-      });
+      setInitialTab(activeTab);
     }
 
     if (activeTab || initialTab) {
@@ -164,33 +152,28 @@ class Element extends Component {
       const defaultFirstTab = 'Main';
       onActivateTab(tabSetName, defaultFirstTab);
     }
-  }
+  };
 
   /**
    * Update the active tab on tab actions menu button click event. Is passed down to InlineEditForm.
    *
    * @param {string} toBeActiveTab
    */
-  handleTabClick(toBeActiveTab) {
-    const { activeTab } = this.props;
-    const { loadingError } = this.state;
+  const handleTabClick = (toBeActiveTab) => {
+    const { activeTab } = props;
 
     if (toBeActiveTab !== activeTab && !loadingError) {
-      this.setState({
-        previewExpanded: true,
-      });
-
-      this.updateFormTab(toBeActiveTab);
+      setPreviewExpanded(true);
+      updateFormTab(toBeActiveTab);
     }
-  }
+  };
 
   /**
-   * Expand the element to show the  preview
+   * Expand the element to show the preview
    * If the element is not inline-editable, take user to the GridFieldDetailForm to edit the record
    */
-  handleExpand(event) {
-    const { type, link } = this.props;
-    const { loadingError } = this.state;
+  const handleExpand = (event) => {
+    const { type, link } = props;
 
     if (type.broken) {
       return;
@@ -203,23 +186,21 @@ class Element extends Component {
     }
 
     if (type.inlineEditable && !loadingError) {
-      this.setState((prevState) => ({
-        previewExpanded: !prevState.previewExpanded
-      }));
+      setPreviewExpanded(prev => !prev);
       return;
     }
 
     // If inline editing is disabled for this element, send them to the standalone
     // edit form
     window.location = link;
-  }
+  };
 
   /**
    * If pressing enter or space key, treat it like a mouse click
    *
    * @param {Object} event
    */
-  handleKeyUp(event) {
+  const handleKeyUp = (event) => {
     const { nodeName } = event.target;
 
     if (
@@ -227,64 +208,56 @@ class Element extends Component {
       // Ignore presses while focusing inputs and textareas
       && !['input', 'textarea'].includes(nodeName.toLowerCase())
     ) {
-      this.handleExpand(event);
+      handleExpand(event);
     }
+  };
+
+
+
+  // Render
+  const {
+    element,
+    type,
+    areaId,
+    HeaderComponent,
+    ContentComponent,
+    ColumnSizeComponent,
+    link,
+    activeTab,
+    onDragEnd,
+  } = props;
+
+  if (!element.id) {
+    return null;
   }
 
-  handleChangeSize(e) {
-    this.setState({
-      size: e.target.value
-    });
-  }
+  const elementClassNames = classNames(
+    'element-editor__element',
+    {
+      'element-editor__element--broken': type.broken,
+      'element-editor__element--expandable': type.inlineEditable && !type.broken,
+      'element-editor__element--dragging': isDragging,
+      'element-editor__element--dragged-over': isOver,
+    },
+    getVersionedStateClassName(),
+  );
 
-  handleChangeOffset(e) {
-    this.setState({
-      offset: e.target.value
-    });
-  }
-
-  render() {
-    const {
-      element,
-      type,
-      areaId,
-      HeaderComponent,
-      ContentComponent,
-      ColumnSizeComponent,
-      link,
-      activeTab,
-      connectDragSource,
-      connectDropTarget,
-      isDragging,
-      isOver,
-      onDragEnd,
-    } = this.props;
-
-    const { childRenderingError, previewExpanded } = this.state;
-
-    if (!element.id) {
-      return null;
-    }
-
-    const elementClassNames = classNames(
-      'element-editor__element',
-      {
-        'element-editor__element--broken': type.broken,
-        'element-editor__element--expandable': type.inlineEditable && !type.broken,
-        'element-editor__element--dragging': isDragging,
-        'element-editor__element--dragged-over': isOver,
-      },
-      this.getVersionedStateClassName(),
-    );
-
-    const content = connectDropTarget(<div key={element.id} className={classNames('element-editor__element-holder', this.getColumnSizeClassNames())}>
+  return (
+    <div 
+      className={classNames('element-editor__element-holder', getColumnSizeClassNames())}
+    >
       <div
         className={elementClassNames}
-        onClick={this.handleExpand}
-        onKeyUp={this.handleKeyUp}
+        onClick={handleExpand}
+        onKeyUp={handleKeyUp}
         role="button"
         tabIndex={0}
-        title={this.getLinkTitle(type)}
+        title={getLinkTitle(type)}
+        key={element.id}
+        ref={setNodeRef}
+        {...(!previewExpanded ? attributes : {})}
+        {...(!previewExpanded ? listeners : {})}
+        style={style}
       >
         <HeaderComponent
           element={element}
@@ -293,10 +266,12 @@ class Element extends Component {
           expandable={type.inlineEditable}
           link={link}
           previewExpanded={previewExpanded && !childRenderingError}
-          handleEditTabsClick={this.handleTabClick}
+          handleEditTabsClick={handleTabClick}
           activeTab={activeTab}
           disableTooltip={isDragging}
           onDragEnd={onDragEnd}
+          currentSize={props.currentSize}
+          currentOffset={props.currentOffset}
         />
 
         {
@@ -305,11 +280,11 @@ class Element extends Component {
             id={element.id}
             fileUrl={element.blockSchema.fileURL}
             fileTitle={element.blockSchema.fileTitle}
-            content={this.getSummary(element, type)}
+            content={getSummary(element, type)}
             previewExpanded={previewExpanded && !isDragging}
             activeTab={activeTab}
-            onFormInit={() => this.updateFormTab(activeTab)}
-            handleLoadingError={this.handleLoadingError}
+            onFormInit={() => updateFormTab(activeTab)}
+            handleLoadingError={handleLoadingError}
             broken={type.broken}
           />
         }
@@ -321,27 +296,11 @@ class Element extends Component {
           </div>
         }
 
-        {!element.blockSchema.grid.isRow &&
-          <ColumnSizeComponent
-            elementId={element.id}
-            size={element.blockSchema.grid.column.size}
-            defaultViewport={element.blockSchema.grid.column.defaultViewport}
-            gridColumns={element.blockSchema.grid.gridColumns}
-            offset={element.blockSchema.grid.column.offset}
-            handleChangeSize={this.handleChangeSize}
-            handleChangeOffset={this.handleChangeOffset}
-          />
-        }
+
       </div>
-    </div>);
-
-    if (!previewExpanded) {
-      return connectDragSource(content);
-    }
-
-    return content;
-  }
-}
+    </div>
+  );
+};
 
 function mapStateToProps(state, ownProps) {
   const elementId = ownProps.element.id;
@@ -389,18 +348,15 @@ Element.propTypes = {
   type: elementTypeType.isRequired,
   areaId: PropTypes.number.isRequired,
   link: PropTypes.string.isRequired,
+  currentSize: PropTypes.number,
+  currentOffset: PropTypes.number,
   // Redux mapped props:
   activeTab: PropTypes.string,
   tabSetName: PropTypes.string,
   onActivateTab: PropTypes.func,
-  connectDragSource: PropTypes.func.isRequired,
-  connectDragPreview: PropTypes.func.isRequired,
-  connectDropTarget: PropTypes.func.isRequired,
-  isDragging: PropTypes.bool.isRequired,
-  isOver: PropTypes.bool.isRequired,
-  onDragOver: PropTypes.func, // eslint-disable-line react/no-unused-prop-types
-  onDragEnd: PropTypes.func, // eslint-disable-line react/no-unused-prop-types
-  onDragStart: PropTypes.func, // eslint-disable-line react/no-unused-prop-types
+  onDragOver: PropTypes.func,
+  onDragEnd: PropTypes.func,
+  onDragStart: PropTypes.func,
   isDraggedOver: PropTypes.bool,
   isDraggedOverPosition: PropTypes.string
 };
@@ -411,40 +367,13 @@ Element.defaultProps = {
 
 export { Element as Component };
 
-const elementTarget = {
-  drop(props, monitor, component) {
-    const { element } = props;
-    return {
-      target: element.id,
-      dropSpot: isOverTop(monitor, component, element) ? 'top' : 'bottom',
-    };
-  },
-
-  hover(props, monitor, component) {
-    const { element, onDragOver } = props;
-
-    if (onDragOver) {
-      onDragOver(element, isOverTop(monitor, component, element));
-    }
-  },
-};
-
 export default compose(
-  DropTarget('element', elementTarget, (connector, monitor) => ({
-    connectDropTarget: connector.dropTarget(),
-    isOver: monitor.isOver(),
-  })),
-  DragSource('element', elementDragSource, (connector, monitor) => ({
-    connectDragSource: connector.dragSource(),
-    connectDragPreview: connector.dragPreview(),
-    isDragging: monitor.isDragging(),
-  })),
   connect(mapStateToProps, mapDispatchToProps),
   inject(
     ['ElementHeader', 'ElementContent', 'ColumnSize'],
     (HeaderComponent, ContentComponent, ColumnSizeComponent) => ({
       HeaderComponent, ContentComponent, ColumnSizeComponent
     }),
-    () => 'ElementEditor.ElementList.Element'
+    () => 'Element'
   )
 )(Element);

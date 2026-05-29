@@ -1,12 +1,145 @@
-.elemental-editor-list > .element-editor__element-holder {
-  padding: 0;
+/* Bootstrap Grid Implementation for CMS Visual Feedback */
+/* Make .elemental-editor-list a flex container (Bootstrap row) */
+.elemental-editor-list {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  margin-right: -15px !important;
+  margin-left: -15px !important;
+
+  &.row {
+    /* Ensure Bootstrap row styles apply */
+    box-sizing: border-box;
+  }
+}
+
+/* Element cards are direct children in SS6 - apply padding and grid classes to them */
+.elemental-editor-list>.element-editor__element {
+  padding-right: 15px !important;
+  padding-left: 15px !important;
+  box-sizing: border-box;
+  position: relative;
+  width: 100%;
+  min-height: 1px;
+  transition: all 200ms ease-in-out;
+
+  &.col-lg-1 {
+    flex: 0 0 8.333333%;
+    max-width: 8.333333%;
+  }
+
+  &.col-lg-2 {
+    flex: 0 0 16.666667%;
+    max-width: 16.666667%;
+  }
+
+  &.col-lg-3 {
+    flex: 0 0 25%;
+    max-width: 25%;
+  }
+
+  &.col-lg-4 {
+    flex: 0 0 33.333333%;
+    max-width: 33.333333%;
+  }
+
+  &.col-lg-5 {
+    flex: 0 0 41.666667%;
+    max-width: 41.666667%;
+  }
+
+  &.col-lg-6 {
+    flex: 0 0 50%;
+    max-width: 50%;
+  }
+
+  &.col-lg-7 {
+    flex: 0 0 58.333333%;
+    max-width: 58.333333%;
+  }
+
+  &.col-lg-8 {
+    flex: 0 0 66.666667%;
+    max-width: 66.666667%;
+  }
+
+  &.col-lg-9 {
+    flex: 0 0 75%;
+    max-width: 75%;
+  }
+
+  &.col-lg-10 {
+    flex: 0 0 83.333333%;
+    max-width: 83.333333%;
+  }
+
+  &.col-lg-11 {
+    flex: 0 0 91.666667%;
+    max-width: 91.666667%;
+  }
+
+  &.col-lg-12 {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+
+  /* Bootstrap offset classes - define left margins */
+  &.offset-lg-1 {
+    margin-left: 8.333333%;
+  }
+
+  &.offset-lg-2 {
+    margin-left: 16.666667%;
+  }
+
+  &.offset-lg-3 {
+    margin-left: 25%;
+  }
+
+  &.offset-lg-4 {
+    margin-left: 33.333333%;
+  }
+
+  &.offset-lg-5 {
+    margin-left: 41.666667%;
+  }
+
+  &.offset-lg-6 {
+    margin-left: 50%;
+  }
+
+  &.offset-lg-7 {
+    margin-left: 58.333333%;
+  }
+
+  &.offset-lg-8 {
+    margin-left: 66.666667%;
+  }
+
+  &.offset-lg-9 {
+    margin-left: 75%;
+  }
+
+  &.offset-lg-10 {
+    margin-left: 83.333333%;
+  }
+
+  &.offset-lg-11 {
+    margin-left: 91.666667%;
+  }
 }
 
 .element-editor__element {
   border: 0;
   min-height: 4rem;
   outline: 1px solid #dbe0e9;
-  transition: all 100ms linear;
+  transition: all 200ms ease-in-out;
+  position: relative;
+  z-index: 15;
+
+  &:hover,
+  &:focus-within {
+    z-index: 110 !important;
+  }
 
   &--expanded {
     flex: 0 0 100%;
@@ -21,13 +154,13 @@
   }
 
   &.is-row {
-    -webkit-flex: none;
     background: #f4f6f8;
-    display: block;
-    flex: none;
-    max-width: none;
     padding: 1.5rem 1.5385rem;
-    width: 100%;
+    border-left: 4px solid #6c8ebf; // Contained row
+
+    &.is-fluid-row {
+      border-left: 4px solid #4caf9e; // Fluid row
+    }
 
     .element-editor-summary {
       display: none;
@@ -35,65 +168,199 @@
   }
 }
 
+/* Grid-Aware Hover Bars */
 .element-editor__hover-bar {
-  display: none;
-}
+  position: absolute !important;
+  z-index: 20;
+  overflow: visible !important;
+  pointer-events: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
 
-.is-dragged-top,
-.is-dragged-bottom {
-  position: relative;
+  &:focus-within,
+  &:has(.popover),
+  &:has(.element-editor-add-element) {
+    z-index: 1050 !important;
+  }
 
-  &::after {
+  .element-editor__hover-bar-area {
+    position: absolute !important;
+    background: transparent !important;
+    border: none !important;
+    outline: none !important;
+    pointer-events: auto !important;
+    cursor: pointer;
+    z-index: 21;
+    display: flex !important;
     align-items: center;
-    background-color: rgba(0, 113, 196, 0.2);
-    border: 3px dashed rgba(0, 63, 109, 0.25);
-    bottom: 0;
-    color: rgb(0, 113, 196);
-    display: flex;
-    font-size: 1.5em;
-    font-weight: bold;
     justify-content: center;
-    padding: 1rem;
-    position: absolute;
-    text-align: center;
-    top: 0;
-    width: 50%;
-  }
-}
+    transition: all 0.2s ease-in-out;
 
-.is-dragged-top {
-  &::after {
-    content: 'Drop here to place left';
-    left: 0;
+    &:focus-visible {
+      outline: 2px solid #005ae1 !important;
+      outline-offset: -2px;
+      background-color: rgba(0, 90, 225, 0.08) !important;
+    }
   }
 
-  &.is-row {
-    &::after {
-      bottom: 50%;
-      content: 'Drop here to place above';
+  /* Ensure the add block popover remains interactive and has proper width inside hover bars */
+  .element-editor-add-element,
+  .popover {
+    pointer-events: auto !important;
+    width: 320px !important;
+    max-width: none !important;
+  }
+
+  /* Horizontal Hover Bar Styles */
+  &.hover-bar--horizontal {
+    .element-editor__hover-bar-area {
+      width: 100% !important;
+      height: 20px !important;
+      top: 0 !important;
+      left: 0 !important;
+    }
+
+    .element-editor__hover-bar-area-inner {
+      height: 100% !important;
+      display: block;
+    }
+
+    .element-editor__hover-bar-line {
+      width: 100% !important;
+      height: 4px !important;
+      background-color: #005ae1;
+      opacity: 0;
+      transition: all 0.2s ease-in-out;
+      border-radius: 2px;
+      position: absolute;
+      top: 8px;
       left: 0;
-      right: 0;
+      transform: none !important;
+
+      &::before {
+        position: absolute;
+        left: 50%;
+        right: auto !important;
+        margin-right: 0 !important;
+        top: 50%;
+        transform: translate(-50%, -50%) scale(0.8) !important;
+        color: #005ae1;
+        font-size: 24px;
+        width: 24px;
+        height: 24px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background-image: radial-gradient(#fff 50%, transparent 50%);
+        transition: all 0.2s ease-in-out;
+      }
+    }
+
+    .element-editor__hover-bar-area:hover,
+    .element-editor__hover-bar-area:focus-within {
+      .element-editor__hover-bar-line {
+        opacity: 1;
+        &::before {
+          transform: translate(-50%, -50%) scale(1.1) !important;
+        }
+      }
+    }
+  }
+
+  /* Vertical Hover Bar Styles (Columns) */
+  &.hover-bar--vertical {
+    .element-editor__hover-bar-area {
+      width: 20px !important;
+      height: 100% !important;
+      top: 0 !important;
+      left: 0 !important;
+    }
+
+    .element-editor__hover-bar-area-inner {
+      margin: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      display: block;
+    }
+
+    .element-editor__hover-bar-line {
+      width: 4px !important;
+      height: 100% !important;
+      max-height: none !important;
+      background-color: #005ae1;
+      opacity: 0;
+      transition: all 0.2s ease-in-out;
+      border-radius: 2px;
+      position: absolute;
+      left: 8px;
       top: 0;
-      width: 100%;
+      transform: none !important;
+
+      &::before {
+        position: absolute;
+        left: 50%;
+        right: auto !important;
+        margin-right: 0 !important;
+        top: 50%;
+        transform: translate(-50%, -50%) scale(0.8) !important;
+        color: #005ae1;
+        font-size: 24px;
+        width: 24px;
+        height: 24px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background-image: radial-gradient(#fff 50%, transparent 50%);
+        transition: all 0.2s ease-in-out;
+      }
+    }
+
+    .element-editor__hover-bar-area:hover,
+    .element-editor__hover-bar-area:focus-within {
+      .element-editor__hover-bar-line {
+        opacity: 1;
+        &::before {
+          transform: translate(-50%, -50%) scale(1.1) !important;
+        }
+      }
     }
   }
 }
 
-.is-dragged-bottom {
-  &::after {
-    content: 'Drop here to place right';
-    right: 0;
-  }
+.elemental-editor-list.dragging-active .element-editor__hover-bar {
+  display: none !important;
+}
 
-  &.is-row {
-    &::after {
-      bottom: 0;
-      content: 'Drop here to place below';
-      left: 0;
-      right: 0;
-      top: 50%;
-      width: 100%;
-    }
+/* ENHANCED DRAG POSITION INDICATOR STYLING */
+.elemental-editor-drag-indicator {
+  height: 4px !important;
+  background: rgba(0, 113, 196, 0.8) !important;
+  border-radius: 2px;
+  box-shadow: 0 0 8px rgba(0, 113, 196, 0.4);
+  margin: 8px 0 !important;
+  animation: drag-indicator-pulse 2s ease-in-out infinite;
+}
+
+@keyframes drag-indicator-pulse {
+  0%, 100% {
+    opacity: 0.8;
+    transform: scaleY(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scaleY(1.2);
+  }
+}
+
+/* ELEMENT TOOLBAR STYLING */
+.element-editor__toolbar {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+
+  .btn {
+    flex: 1;
+    min-width: auto;
   }
 }
 
@@ -102,6 +369,245 @@
   display: flex;
 }
 
-.optionset-image-field:not(.form-group) > .radio {
+.optionset-image-field:not(.form-group)>.radio {
   margin-right: 10px;
+}
+
+/* COLUMN SIZE CONTROLS - Popover Styling */
+.column-size-controls-wrapper {
+  display: inline-flex !important;
+  align-items: center;
+  z-index: 5 !important;
+  order: -1;
+
+  .element-editor-header__action {
+    color: #555;
+    font-size: 1rem;
+    padding: 0.25rem 0.5rem;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    transition: color 0.15s ease-in-out;
+    margin-right: 5px;
+
+    &:hover, &:focus {
+      color: #0071c4;
+      background: transparent;
+      text-decoration: none;
+    }
+  }
+}
+
+.grid-layout-popover {
+  position: absolute !important;
+  width: 0 !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  pointer-events: none !important;
+
+  .popover {
+    pointer-events: auto !important;
+    background-color: #fff;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1060;
+    width: 260px;
+    border-color: rgba(0, 0, 0, 0.15) !important;
+  }
+
+  .popover-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #495057;
+    margin: 0;
+  }
+
+  .popover-body {
+    padding: 0.75rem;
+  }
+
+  .grid-popover-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+
+    .mb-2 {
+      margin-bottom: 0.5rem !important;
+      display: flex;
+      flex-direction: column;
+    }
+
+    label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 0.25rem;
+      display: inline-block;
+    }
+
+    .form-control {
+      font-size: 0.75rem !important;
+      padding: 0.25rem 0.5rem !important;
+      height: 30px !important;
+      border: 1px solid #ced4da;
+      border-radius: 3px;
+      background-color: #fff;
+      color: #495057;
+      width: 100%;
+      cursor: pointer;
+      display: block;
+      
+      &:focus {
+        border-color: #0071c4;
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(0, 113, 196, 0.15);
+      }
+    }
+  }
+}
+
+/* FULL WIDTH BREAKOUT ENGINE */
+
+/* 1. Base / Contained Layout (Default & Contained Rows) */
+.elemental-editor-list {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  padding: 0 30px !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+/* Base styles for all column elements (including offsets) - constrained to 960px and responsive */
+.element-editor__element:not(.is-row) {
+  /* Override header info max-width to allow layout action button and expand chevron to sit cleanly */
+  .element-editor-header__info {
+    max-width: calc(100% - 90px) !important;
+  }
+
+  @for $i from 1 through 12 {
+    &.col-lg-#{$i} {
+      flex: 0 0 calc(min(100%, 960px) * (#{$i} / 12)) !important;
+      max-width: calc(min(100%, 960px) * (#{$i} / 12)) !important;
+    }
+  }
+  @for $i from 1 through 11 {
+    &.offset-lg-#{$i} {
+      margin-left: calc(min(100%, 960px) * (#{$i} / 12)) !important;
+    }
+  }
+}
+
+/* Centering is now handled dynamically by centerContainedElements() in bundle.js.
+   The JS function detects visual flex row breaks and applies centering margin-left
+   to the first element on each new line within a contained section. */
+
+/* 2. Fluid Layout Breakout (Encountered a Fluid Row) */
+.elemental-editor-list:has(.is-fluid-row) {
+  /* Bleed out to fill the absolute edge of the CMS split pane */
+  max-width: 100% !important;
+  width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  padding: 0 !important;
+}
+
+/* Row blocks get their explicit widths: fluid row is 100%, contained row is max 960px (and centered) */
+.element-editor__element.is-fluid-row {
+  flex: 0 0 100% !important;
+  max-width: 100% !important;
+}
+
+.element-editor__element.is-contained-row {
+  flex: 0 0 min(100%, 960px) !important;
+  max-width: min(100%, 960px) !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+/* Adjacent-sibling centering removed — handled by centerContainedElements() in JS */
+
+/* 3. Alternating Sibling Selector Engine */
+/* We alternate selectors up to 6 depths to ensure the closest row type controls the sibling columns' width */
+$selector-fluid: ".is-fluid-row";
+$selector-contained: ".is-fluid-row ~ .is-row";
+
+@for $depth from 1 through 6 {
+  // Fluid override: If under a fluid row, columns span full percentage width
+  #{$selector-fluid} ~ .element-editor__element:not(.is-row) {
+    @for $i from 1 through 12 {
+      &.col-lg-#{$i} {
+        flex: 0 0 calc(100% * (#{$i} / 12)) !important;
+        max-width: calc(100% * (#{$i} / 12)) !important;
+      }
+    }
+    @for $i from 1 through 11 {
+      &.offset-lg-#{$i} {
+        margin-left: calc(100% * (#{$i} / 12)) !important;
+      }
+    }
+  }
+
+  // Contained override: Reset back to constrained 960px width
+  #{$selector-contained} ~ .element-editor__element:not(.is-row) {
+    @for $i from 1 through 12 {
+      &.col-lg-#{$i} {
+        flex: 0 0 calc(min(100%, 960px) * (#{$i} / 12)) !important;
+        max-width: calc(min(100%, 960px) * (#{$i} / 12)) !important;
+      }
+    }
+    @for $i from 1 through 11 {
+      &.offset-lg-#{$i} {
+        margin-left: calc(min(100%, 960px) * (#{$i} / 12)) !important;
+      }
+    }
+  }
+
+  // Extend the selectors for the next nesting level
+  $selector-fluid: "#{$selector-contained} ~ .is-fluid-row";
+  $selector-contained: "#{$selector-fluid} ~ .is-row";
+}
+
+/* Grid layout visual badges */
+.grid-size-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  font-weight: 700;
+  background-color: #e9ecef;
+  color: #495057;
+  padding: 0.15rem 0.4rem;
+  border-radius: 10px;
+  margin-left: 8px;
+  vertical-align: middle;
+  line-height: 1;
+}
+
+.grid-row-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  font-weight: 700;
+  background-color: #e2e6ea;
+  color: #343a40;
+  padding: 0.15rem 0.4rem;
+  border-radius: 10px;
+  margin-left: 8px;
+  vertical-align: middle;
+  line-height: 1;
 }
