@@ -21,19 +21,16 @@
         "silverstripe/framework": "^6.0",
         "silverstripe/vendor-plugin": "^3.0",
         "dnadesign/silverstripe-elemental": "^6.0",
-        "wedevelopnl/silverstripe-media-field": "dev-feature/ss6-upgrade",
+        "wedevelopnl/silverstripe-media-field": "^6",
         "jonom/focuspoint": "^6.0"
     },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^3.4"
     },
-    "repositories": [
-        {
-            "type": "vcs",
-            "url": "https://github.com/dynamic/silverstripe-media-field.git"
-        }
-    ],
     "extra": {
+        "branch-alias": {
+            "dev-6": "6.x-dev"
+        },
         "expose": [
             "client/dist",
             "client/images"
