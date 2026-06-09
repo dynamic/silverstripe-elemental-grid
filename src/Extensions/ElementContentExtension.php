@@ -18,12 +18,14 @@ use SilverStripe\Forms\OptionsetField;
 use SilverStripe\Forms\ReadonlyField;
 use SilverStripe\Forms\Tab;
 use SilverStripe\Forms\TextField;
+use Embed\Embed;
 use SilverStripe\Core\Extension;
 use UncleCheese\DisplayLogic\Forms\Wrapper;
 use WeDevelop\ElementalGrid\CSSFramework\CSSFrameworkInterface;
 use WeDevelop\ElementalGrid\CSSFramework\TailwindCSSFramework;
 use WeDevelop\ElementalGrid\ElementalConfig;
 use WeDevelop\MediaField\Form\MediaField;
+use WeDevelop\MediaField\Form\MediaType;
 
 /**
  * @method Image MediaImage()
@@ -151,7 +153,7 @@ final class ElementContentExtension extends Extension
             $mediaField,
             Wrapper::create([
                 CheckboxField::create('MediaVideoHasOverlay', _t(__CLASS__ . '.SHOW_OVERLAY', 'Show dark overlay on top of video thumbnail')),
-            ])->displayIf('MediaType')->isEqualTo(MediaField::TYPE_VIDEO)->end(),
+            ])->displayIf('MediaType')->isEqualTo(MediaType::Video->value)->end(),
             TextField::create('MediaCaption', _t(__CLASS__ . '.CAPTION_TEXT', 'Caption text')),
             DropdownField::create('MediaRatio', _t(__CLASS__ . '.MEDIA_RATIO', 'Media ratio'), static::config()->get('mediaRatios'))
                 ->setEmptyString(_t(__CLASS__ . '.AUTO_DEFAULT', 'Auto (default)'))
@@ -171,7 +173,7 @@ final class ElementContentExtension extends Extension
         ]);
 
 
-        if ($this->getOwner()->MediaType === MediaField::TYPE_VIDEO) {
+        if ($this->getOwner()->MediaType === MediaType::Video->value) {
             $fields->addFieldsToTab('Root.VideoEmbeddedData', [
                 ReadonlyField::create('MediaVideoEmbeddedURL', _t(__CLASS__ . '.SHORTENED_URL', 'Shortened URL')),
                 ReadonlyField::create('MediaVideoProvider', _t(__CLASS__ . '.VIDEO_PROVIDER', 'Video provider')),
@@ -188,9 +190,9 @@ final class ElementContentExtension extends Extension
 
     public function onBeforeWrite(): void
     {
-        if ($this->getOwner()->MediaType === MediaField::TYPE_VIDEO && $this->getOwner()->MediaVideoFullURL) {
+        if ($this->getOwner()->MediaType === MediaType::Video->value && $this->getOwner()->MediaVideoFullURL) {
             $this->getOwner()->MediaVideoFullURL = trim($this->getOwner()->MediaVideoFullURL);
-            MediaField::saveEmbed($this->getOwner());
+            MediaField::saveEmbed($this->getOwner(), new Embed());
         }
     }
 
@@ -198,7 +200,7 @@ final class ElementContentExtension extends Extension
     {
         $mediaRatio = $this->getOwner()->MediaRatio;
 
-        if (!$this->getOwner()->MediaRatio && $this->getOwner()->MediaType === MediaField::TYPE_VIDEO) {
+        if (!$this->getOwner()->MediaRatio && $this->getOwner()->MediaType === MediaType::Video->value) {
             $mediaRatio = '16x9';
         }
 
