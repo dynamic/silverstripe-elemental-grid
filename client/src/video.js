@@ -24,7 +24,7 @@ window.addEventListener('DOMContentLoaded', () => {
       );
 
       // REPLACE DIV FOR VIDEO
-      const playerYT = new YouTubePlayer(`player-${elementId}`, {
+      const playerYT = YouTubePlayer(`player-${elementId}`, {
         videoId: videoID,
         playerVars: {
           playsinline: 1,
